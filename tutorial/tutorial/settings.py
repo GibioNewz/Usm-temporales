@@ -40,8 +40,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'quickstart',
-]
+    'quickstart', # Tu app
+    'rest_framework',
+    'rest_framework.authtoken', # Necesario para la autenticación por token básica de DRF
+    'dj_rest_auth',
+        'rest_framework_simplejwt', # Para JWT (JSON Web Tokens)
+    ]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -125,3 +130,23 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        # 'rest_framework.authentication.TokenAuthentication', # Alternativa a JWT
+        # 'rest_framework.authentication.SessionAuthentication', # Útil para la API navegable de DRF
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        # Permite acceso de solo lectura a usuarios no autenticados,
+        # y acceso de lectura-escritura a usuarios autenticados.
+        # Puedes cambiar esto a 'rest_framework.permissions.IsAuthenticated'
+        # para requerir autenticación para CUALQUIER acceso a la API.
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    )
+}
+REST_AUTH = {
+    'USE_JWT': True,
+    'JWT_AUTH_HTTPONLY': False, # True es más seguro (token no accesible por JS),
+                               # False si tu frontend necesita leer el token directamente.
+    # 'SESSION_LOGIN': False, # Deshabilita el login por sesión si solo quieres JWT
+}
