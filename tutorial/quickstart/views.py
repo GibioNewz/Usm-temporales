@@ -23,7 +23,6 @@ def hello_world(request):
     return HttpResponse("Hello, World!")
 
 def weather_report(request):
-    # ... (todo tu código de weather_report) ...
     # Setup the Open-Meteo API client with cache and retry on error
     cache_session = requests_cache.CachedSession('.cache', expire_after=3600)
     retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
@@ -32,12 +31,22 @@ def weather_report(request):
     # Hardcoded parameters
     url = "https://api.open-meteo.com/v1/forecast"
     params = {
-        "latitude": 52.52,  # Berlin
-        "longitude": 13.41,
+        "latitude": -33.49036578221527, #USM
+        "longitude": -70.61876212713469,
         "current": ["temperature_2m", "weather_code", "wind_speed_10m"],
-        "hourly": ["temperature_2m", "relative_humidity_2m", "precipitation_probability"],
+        # Updated hourly parameters
+        "hourly": [
+            "temperature_2m", 
+            "relative_humidity_2m", 
+            "precipitation_probability",
+            "apparent_temperature",  # Feels-like temp
+            "precipitation",         # Actual rain/snow amount
+            "cloud_cover",           # Sky cloud percentage
+            "visibility",            # Visibility distance
+            "uv_index"               # UV exposure index
+        ],
         "daily": ["weather_code", "temperature_2m_max", "temperature_2m_min", "sunrise", "sunset"],
-        "timezone": "Europe/Berlin",
+        "timezone": "America/Santiago",
         "forecast_days": 3
     }
     
@@ -53,50 +62,65 @@ def weather_report(request):
         "wind_speed": float(current.Variables(2).Value()),
     }
     
-    # Process hourly data for the next 24 hours
+    # Process hourly data with simplified time extraction and new parameters
     hourly = response.Hourly()
-    hourly_time_np = hourly.Time() # Start time of the forecast range
-    hourly_time_end_np = hourly.TimeEnd()
-    hourly_interval_seconds = hourly.Interval()
-
-    # Generate actual timestamps for hourly data
-    hourly_timestamps = np.arange(hourly_time_np, hourly_time_end_np, hourly_interval_seconds)
-    hourly_time_iso = [datetime.utcfromtimestamp(ts).isoformat() + "Z" for ts in hourly_timestamps]
-
-    hourly_temp = hourly.Variables(0).ValuesAsNumpy().tolist()
-    hourly_humidity = hourly.Variables(1).ValuesAsNumpy().tolist()
-    hourly_precip = hourly.Variables(2).ValuesAsNumpy().tolist()
-        
+    
+    try:
+        # Try the simplified time extraction method
+        hourly_time = hourly.Time().ValuesAsNumpy().astype(str).tolist()[:24]
+    except (AttributeError, TypeError):
+        # Fall back to the previous method if the new one fails
+        hourly_time_np = hourly.Time()
+        hourly_time = []
+        for i in range(24):  # Just process the first 24 hours
+            if isinstance(hourly_time_np, np.ndarray):
+                hourly_time.append(str(hourly_time_np[i]))
+            else:
+                try:
+                    hourly_time.append(hourly_time_np.isoformat())
+                except AttributeError:
+                    hourly_time.append(str(hourly_time_np))
+    
+    # Updated hourly data with new parameters
     hourly_data = {
-        "time": hourly_time_iso[:24], # Show up to 24 hours
-        "temperature": hourly_temp[:24],
-        "humidity": hourly_humidity[:24],
-        "precipitation_probability": hourly_precip[:24],
+        "time": hourly_time,
+        "temperature": hourly.Variables(0).ValuesAsNumpy().tolist()[:24],
+        "humidity": hourly.Variables(1).ValuesAsNumpy().tolist()[:24],
+        "precipitation_probability": hourly.Variables(2).ValuesAsNumpy().tolist()[:24],
+        # New fields:
+        "apparent_temperature": hourly.Variables(3).ValuesAsNumpy().tolist()[:24],
+        "precipitation": hourly.Variables(4).ValuesAsNumpy().tolist()[:24],
+        "cloud_cover": hourly.Variables(5).ValuesAsNumpy().tolist()[:24],
+        "visibility": hourly.Variables(6).ValuesAsNumpy().tolist()[:24],
+        "uv_index": hourly.Variables(7).ValuesAsNumpy().tolist()[:24]
     }
     
     # Process daily data
     daily = response.Daily()
-    daily_time_np = daily.Time() # Start time of the daily forecast range
-    daily_time_end_np = daily.TimeEnd()
-    daily_interval_seconds = daily.Interval()
-
-    # Generate actual timestamps for daily data
-    daily_timestamps = np.arange(daily_time_np, daily_time_end_np, daily_interval_seconds)
-    daily_time_iso = [datetime.utcfromtimestamp(ts).date().isoformat() for ts in daily_timestamps]
-    
     daily_weather_code = daily.Variables(0).ValuesAsNumpy().tolist()
     daily_temp_max = daily.Variables(1).ValuesAsNumpy().tolist()
     daily_temp_min = daily.Variables(2).ValuesAsNumpy().tolist()
     
-    # Sunrise and sunset are also arrays
-    daily_sunrise_np = daily.Variables(3).ValuesAsNumpy()
-    daily_sunset_np = daily.Variables(4).ValuesAsNumpy()
+    # Get daily time data
+    daily_time_np = daily.Time()
+    daily_time = []
+    for i in range(len(daily_weather_code)):
+        if isinstance(daily_time_np, np.ndarray):
+            daily_time.append(str(daily_time_np[i]))
+        else:
+            try:
+                daily_time.append(daily_time_np.isoformat())
+            except AttributeError:
+                daily_time.append(str(daily_time_np))
     
-    sunrise_times = [datetime.utcfromtimestamp(ts).isoformat() + "Z" for ts in daily_sunrise_np]
-    sunset_times = [datetime.utcfromtimestamp(ts).isoformat() + "Z" for ts in daily_sunset_np]
-
+    sunrise_times = []
+    sunset_times = []
+    for i in range(len(daily_time)):
+        sunrise_times.append(str(daily.Variables(3).Value()))
+        sunset_times.append(str(daily.Variables(4).Value()))
+    
     daily_data = {
-        "time": daily_time_iso,
+        "time": daily_time,
         "weather_code": daily_weather_code,
         "temperature_max": daily_temp_max,
         "temperature_min": daily_temp_min,
@@ -104,11 +128,12 @@ def weather_report(request):
         "sunset": sunset_times,
     }
     
+    # Prepare the final response
     weather_data = {
         "current": current_data,
         "hourly": hourly_data,
         "daily": daily_data,
-        "location": "Berlin, Germany", # Still hardcoded for now
+        "location": "USM San Joaquín",
         "latitude": params["latitude"],
         "longitude": params["longitude"],
         "timezone": params["timezone"],

@@ -9,6 +9,6 @@ router.register(r'puntos-monitoreo', views.PuntoMonitoreoViewSet, basename='punt
 
 urlpatterns = [
     path('', include(router.urls)), # URLs para el ViewSet de PuntoMonitoreo
-    # path('hello/', views.hello_world, name='hello_world'), # Rutas antiguas, si las mantienes
-    # path('weather/', views.weather_report, name='weather_report'), # Tu endpoint de weather_report si es una función
+    path('hello/', views.hello_world, name='hello_world'), # Rutas antiguas, si las mantienes
+    path('weather/', views.weather_report, name='weather_report'), # Tu endpoint de weather_report si es una función
 ]
