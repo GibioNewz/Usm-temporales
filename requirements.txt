@@ -1,0 +1,9 @@
+torch
+torchvision
+torchaudio
+ultralytics
+timm
+opencv-python-headless
+numpy
+matplotlib
+transformers
