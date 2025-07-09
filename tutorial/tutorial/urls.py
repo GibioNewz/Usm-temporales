@@ -14,9 +14,13 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+# tutorial/tutorial/urls.py
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/auth/', include('dj_rest_auth.urls')),
+    # path('api/auth/registration/', include('dj_rest_auth.registration.urls')),
+    path('api/', include('quickstart.urls')), # Incluye las URLs de tu app 'quickstart'
 ]
