@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>PPP · Probabilidad de Precipitaciones Prestigiosas</title>
+  <style>
+    :root {
+      --bg:            #ffe5ec;
+      --txt:           #4f4f4f;
+      --rose:          #ffe5ec;
+      --rose2:         #ffc2d4;
+      --rose3:         #ff4fa3;
+      --card-bg:       #fff;
+      --tbl-head:      #ffc2d4;
+      --tbl-even:      #fff5f8;
+      --tbl-odd:       #ffe5ec;
+    }
+    body.theme-dark {
+      --bg:            #21222c;
+      --txt:           #f8f8f2;
+      --rose:          #282a36;
+      --rose2:         #44475a;
+      --rose3:         #ff79c6;
+      --card-bg:       #44475a;
+      --tbl-head:      #6272a4;
+      --tbl-even:      #373a47;
+      --tbl-odd:       #282a36;
+    }
+    body.theme-usm {
+      --bg:            #012169;
+      --txt:           #ffcd00;
+      --rose:          #c8102e;
+      --rose2:         #012169;
+      --rose3:         #ffcd00;
+      --card-bg:       #fff;
+      --tbl-head:      #c8102e;
+      --tbl-even:      #011a3d;
+      --tbl-odd:       #01204a;
+    }
+    * { box-sizing:border-box; margin:0; padding:0 }
+    body {
+      background:var(--bg);
+      color:var(--txt);
+      font-family:'Segoe UI',sans-serif;
+      text-align:center;
+      transition:background .3s,color .3s;
+    }
+    h1,h2 { color:var(--rose3); margin:1rem 0 }
+    .top {
+      display:flex; flex-wrap:wrap; justify-content:center;
+      gap:.8rem; margin-bottom:.5rem;
+    }
+    button,.tgl,#themeSelect {
+      background:var(--rose3);
+      color:#fff; border:none;
+      padding:.45rem .9rem; border-radius:20px;
+      font-weight:600; cursor:pointer;
+    }
+    .tgl { display:inline-flex; align-items:center; gap:.3rem }
+    .small { font-size:.8rem; color:rgba(0,0,0,.6) }
+    .sec {
+      padding:1rem 0; border-top:2px solid var(--rose2);
+    }
+    .wrap {
+      display:flex; flex-wrap:wrap;
+      justify-content:center; gap:1rem;
+    }
+    .card {
+      background:var(--card-bg); width:220px;
+      padding:1rem; border-radius:12px;
+      box-shadow:0 4px 12px rgba(0,0,0,.1);
+    }
+    .card h3 { color:var(--rose3); margin-bottom:.3rem }
+    .val {
+      font-size:2.2rem; font-weight:700;
+      color:var(--rose3);
+    }
+    table {
+      width:95%; margin:1rem auto;
+      border-collapse:collapse; font-size:.85rem;
+    }
+    th,td {
+      padding:.5rem .75rem;
+      border-bottom:1px solid rgba(0,0,0,.1);
+      color:var(--txt);
+    }
+    th {
+      background:var(--tbl-head);
+      color:#fff;
+    }
+    tbody tr:nth-child(even) { background:var(--tbl-even) }
+    tbody tr:nth-child(odd)  { background:var(--tbl-odd) }
+    .risk::after {
+      content:attr(data-prob) '%';
+      font-weight:600; margin-left:.3rem;
+    }
+    #slider {
+      -webkit-appearance:none; width:80%; max-width:400px;
+      height:8px; background:var(--rose2);
+      border-radius:4px; margin:.5rem auto;
+      display:block; cursor:pointer;
+    }
+    #slider::-webkit-slider-thumb {
+      -webkit-appearance:none; width:16px; height:16px;
+      background:var(--rose3); border-radius:50%;
+      cursor:pointer;
+    }
+    #detail { margin-top:1rem }
+    #chartContainer {
+      width:90%; max-width:600px; height:200px;
+      margin:1rem auto;
+    }
+    .fun { margin-top:1rem; color:#b62580 }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<h1>PPP — Probabilidad de Precipitaciones Prestigiosas</h1>
+<div class="top">
+  <button id="btnRef">Refrescar</button>
+  <label class="tgl">°C / °F
+    <input id="chkUnit" type="checkbox">
+  </label>
+  <select id="themeSelect">
+    <option value="light">Tema Light PPP</option>
+    <option value="dark">Tema Dark PPP</option>
+    <option value="usm">Tema USM PPP</option>
+  </select>
+  <span id="stamp" class="small">—</span>
+</div>
+<p id="status" class="small">Cargando…</p>
+
+<section class="sec"><h2>Ahora</h2><div id="cardsNow" class="wrap"></div></section>
+<section class="sec"><h2>Próximas 6 h</h2><table id="tbl6"><thead></thead><tbody></tbody></table></section>
+<section class="sec">
+  <h2>Próximas 24 h</h2>
+  <input id="slider" type="range" min="0" max="23" value="0">
+  <div id="detail" class="wrap"></div>
+  <div id="chartContainer"><canvas id="chart24"></canvas></div>
+</section>
+<section class="sec"><h2>Próximos 3 días</h2><table id="tblDays"><thead></thead><tbody></tbody></table></section>
+<section class="sec"><h2>Extras</h2><div id="extras" class="wrap"></div></section>
+<section class="sec"><h2>Horario de Clases</h2>
+  <table id="blockTable">
+    <thead><tr><th>Bloque</th><th>Horario</th><th>Riesgo lluvia</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</section>
+<p id="fun" class="fun"></p>
+
+<script src="ppp-data.js"></script>
+<script>
+const P = {}, C2F = c=>c*9/5+32, qs=id=>document.getElementById(id);
+let useF=false, chart24;
+
+const fmt = t=> useF?C2F(t).toFixed(1)+'°F':t.toFixed(1)+'°C',
+      fmtUV = x=>Number(x).toFixed(1).replace(/\.0$/,'');
+
+function renderNow(){
+  const s = P.summary.current_conditions;
+  qs('cardsNow').innerHTML=`
+    <div class="card"><h3>Temp.</h3>
+      <div class="val">${fmt(s.temperature)}</div>
+      <small>${s.weather_description}</small>
+    </div>
+    <div class="card"><h3>Viento</h3>
+      <div class="val">${s.wind_speed.toFixed(1)} km/h</div>
+    </div>
+    <div class="card"><h3>UV 1 h</h3>
+      <div class="val">${fmtUV(P.uv.uv_index[0])}</div>
+    </div>`;
+}
+
+function render6(){
+  const now=new Date(),
+        head=`<tr><th>Hora</th><th>Temp</th><th>Hum.</th><th>Lluvia%</th><th>UV</th></tr>`,
+        rows=Array.from({length:6},(_,i)=>{
+          const h=(now.getHours()+i)%24;
+          return `<tr>
+            <td>${h.toString().padStart(2,'0')}:00</td>
+            <td>${fmt(P.hourly.temperature[i])}</td>
+            <td>${P.humidity.humidity[i]}%</td>
+            <td>${P.precipitation.precipitation_probability[i]}%</td>
+            <td>${fmtUV(P.uv.uv_index[i])}</td>
+          </tr>`;
+        }).join('');
+  const t=qs('tbl6');
+  t.tHead.innerHTML=head;
+  t.tBodies[0].innerHTML=rows;
+}
+
+function renderSliderDetail(i){
+  const t=P.hourly.temperature[i],
+        h=P.humidity.humidity[i],
+        r=P.precipitation.precipitation_probability[i],
+        u=P.uv.uv_index[i],
+        n=P.clouds.cloud_cover[i],
+        s=P.hourly.apparent_temperature[i],
+        p=P.hourly.precipitation[i].toFixed(1);
+  qs('detail').innerHTML=`
+    <div class="card" style="width:260px">
+      <h3>${i.toString().padStart(2,'0')}:00 Detalle</h3>
+      <div class="val">${fmt(t)}</div>
+      <small>
+        Hum. ${h}% ｜ UV ${fmtUV(u)}<br>
+        Lluvia ${r}% / ${p} mm ｜ Nubes ${n}%<br>
+        Sens. ${fmt(s)}
+      </small>
+    </div>`;
+}
+
+function buildChart24(){
+  const ctx=qs('chart24').getContext('2d'),
+        now=new Date(),
+        labels=Array.from({length:24},(_,i)=>
+          new Date(now.getTime()+i*3600000)
+            .getHours().toString().padStart(2,'0')+':00'),
+        temps=P.hourly.temperature.map(t=>useF?C2F(t):t),
+        rains=P.precipitation.precipitation_probability,
+        c1=getComputedStyle(document.documentElement).getPropertyValue('--rose3').trim(),
+        c2=getComputedStyle(document.documentElement).getPropertyValue('--tbl-head').trim();
+  if(chart24) chart24.destroy();
+  chart24=new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'Temperatura',data:temps,borderColor:c1,backgroundColor:c1+'33',yAxisID:'yTemp',tension:0.3,pointRadius:3},
+      {label:'Lluvia %',data:rains,borderColor:c2,backgroundColor:c2+'33',yAxisID:'yRain',borderDash:[5,5],pointRadius:3}
+    ]},
+    options:{
+      responsive:true,
+      interaction:{mode:'index',intersect:false},
+      scales:{
+        x:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{maxRotation:0}},
+        yTemp:{type:'linear',position:'left',title:{display:true,text:'°C'},grid:{color:'rgba(0,0,0,0.05)'}},
+        yRain:{type:'linear',position:'right',title:{display:true,text:'%'},grid:{drawOnChartArea:false}}
+      },
+      plugins:{legend:{position:'top'}},
+      maintainAspectRatio:false
+    }
+  });
+}
+
+function renderDays(){
+  const head=`<tr><th>Día</th><th>Máx</th><th>Mín</th><th>Clima</th></tr>`,
+        rows=Array.from({length:3},(_,i)=>{
+          const d=new Date(); d.setDate(d.getDate()+i);
+          return `<tr>
+            <td>${d.toISOString().slice(0,10)}</td>
+            <td>${fmt(P.daily.temperature_max[i])}</td>
+            <td>${fmt(P.daily.temperature_min[i])}</td>
+            <td>${P.daily.weather_descriptions[i]}</td>
+          </tr>`;
+        }).join('');
+  const t=qs('tblDays');
+  t.tHead.innerHTML=head;
+  t.tBodies[0].innerHTML=rows;
+}
+
+function renderExtras(){
+  const s=P.summary.current_conditions,
+        chill=(t,v)=>t<=10&&v>4.8?13.12+.6215*t-11.37*(v**.16)+.3965*t*(v**.16):t,
+        fc=chill(s.temperature,s.wind_speed).toFixed(1),
+        uvMax=fmtUV(Math.max(...P.uv.uv_index)),
+        visMax=Math.max(...P.visibility.visibility)+' m',
+        rain24=P.hourly.precipitation.reduce((a,b)=>a+b,0).toFixed(1)+' mm';
+  qs('extras').innerHTML=`
+    <div class="card"><h3>Sensación</h3><div class="val">${fmt(parseFloat(fc))}</div></div>
+    <div class="card"><h3>UV máx hoy</h3><div class="val">${uvMax}</div></div>
+    <div class="card"><h3>Visib. máx</h3><div class="val">${visMax}</div></div>
+    <div class="card"><h3>Prec. 24 h</h3><div class="val">${rain24}</div></div>`;
+}
+
+const BLOCKS=[
+  {label:'1–2',start:'08:15',end:'09:25'},
+  {label:'3–4',start:'09:40',end:'10:50'},
+  {label:'5–6',start:'11:05',end:'12:15'},
+  {label:'7–8',start:'12:30',end:'13:40'},
+  {label:'9–10',start:'14:00',end:'15:10'},
+  {label:'11–12',start:'15:30',end:'16:40'},
+  {label:'13–14',start:'17:00',end:'18:10'},
+  {label:'15–16',start:'18:30',end:'19:40'}
+];
+
+function renderSchedule(){
+  const now=new Date(),
+        probs=P.precipitation.precipitation_probability,
+        tbody=qs('blockTable').tBodies[0];
+  tbody.innerHTML='';
+  BLOCKS.forEach(b=>{
+    const h1=+b.start.split(':')[0],
+          h2=+b.end.split(':')[0];
+    let idx1=(h1-now.getHours()+24)%24,
+        idx2=(h2-now.getHours()+24)%24;
+    if(idx2<idx1) idx2+=24;
+    const slice=probs.slice(idx1,idx2+1),
+          avg=slice.reduce((a,v)=>a+v,0)/slice.length;
+    tbody.innerHTML+=
+      `<tr><td>${b.label}</td>
+           <td>${b.start}–${b.end}</td>
+           <td class="risk" data-prob="${avg.toFixed(0)}"></td>
+       </tr>`;
+  });
+}
+
+function renderFun(){
+  qs('fun').innerText='Fun fact: Nubosidad máx '+Math.max(...P.clouds.cloud_cover)+'%';
+}
+
+function updateStatus(){
+  qs('stamp').innerText='Actualizado '+new Date().toLocaleTimeString();
+  qs('status').innerText=`${P.location} — ${P.timezone}`;
+}
+
+async function fetchAll(){
+  document.body.style.opacity=.6;
+  await Promise.all([
+    g('weather/summary/?format=json').then(d=>P.summary=d),
+    g('weather/?format=json').then(d=>{P.hourly=d.hourly;P.daily=d.daily;P.location=d.location;P.timezone=d.timezone}),
+    g('weather/uv/?format=json').then(d=>P.uv=d),
+    g('weather/humidity/?format=json').then(d=>P.humidity=d),
+    g('weather/precipitation/?format=json').then(d=>P.precipitation=d),
+    g('weather/visibility/?format=json').then(d=>P.visibility=d),
+    g('weather/clouds/?format=json').then(d=>P.clouds=d)
+  ]);
+  document.body.style.opacity=1;
+  updateStatus();
+  renderNow(); render6(); renderSliderDetail(qs('slider').value);
+  buildChart24(); renderDays(); renderExtras(); renderSchedule(); renderFun();
+}
+
+document.addEventListener('ppp-ready',fetchAll);
+qs('btnRef').onclick=fetchAll;
+qs('chkUnit').onchange=e=>{
+  useF=e.target.checked;
+  renderNow(); render6(); renderSliderDetail(qs('slider').value);
+  buildChart24(); renderDays(); renderExtras(); renderSchedule();
+};
+qs('slider').oninput=e=>renderSliderDetail(e.target.value);
+qs('themeSelect').onchange=e=>{
+  document.body.classList.remove('theme-dark','theme-usm');
+  if(e.target.value==='dark') document.body.classList.add('theme-dark');
+  if(e.target.value==='usm')  document.body.classList.add('theme-usm');
+};
+</script>
+</body>
+</html>
