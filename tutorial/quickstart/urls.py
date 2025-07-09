@@ -5,6 +5,7 @@ from . import views
 
 router = DefaultRouter()
 router.register(r'puntos-monitoreo', views.PuntoMonitoreoViewSet, basename='puntomonitoreo')
+router.register(r'events', views.EventViewSet, basename='event')
 # router.register(r'weather', views.WeatherReportViewSet, basename='weather') # Si tuvieras un ViewSet para weather
 
 urlpatterns = [

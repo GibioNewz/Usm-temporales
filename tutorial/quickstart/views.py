@@ -8,9 +8,10 @@ from retry_requests import retry
 import numpy as np
 from datetime import datetime
 
-from rest_framework import viewsets, permissions
-from .models import PuntoMonitoreo
-from .serializers import PuntoMonitoreoSerializer
+from rest_framework import viewsets, permissions, status
+from rest_framework.response import Response
+from .models import PuntoMonitoreo, Event
+from .serializers import PuntoMonitoreoSerializer, EventSerializer
 
 def hello_world(request):
     return HttpResponse("Hello, World!")
@@ -148,6 +149,59 @@ class PuntoMonitoreoViewSet(viewsets.ModelViewSet):
             serializer.save(creado_por=self.request.user)
         else:
             serializer.save()
+
+
+class EventViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint que permite crear, ver, editar y eliminar Eventos.
+    Solo los administradores pueden crear, editar y eliminar eventos.
+    Los usuarios autenticados pueden ver los eventos.
+    """
+    queryset = Event.objects.all().order_by('-date')
+    serializer_class = EventSerializer
+    
+    def get_permissions(self):
+        """
+        Permisos personalizados:
+        - Solo administradores pueden crear, editar y eliminar eventos
+        - Usuarios autenticados pueden ver eventos (GET)
+        """
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+        else:
+            permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+        
+        return [permission() for permission in permission_classes]
+
+    def perform_create(self, serializer):
+        """
+        Personaliza la creación de un evento.
+        Asigna automáticamente el usuario autenticado como 'created_by'.
+        """
+        serializer.save(created_by=self.request.user)
+    
+    def create(self, request, *args, **kwargs):
+        """
+        Endpoint personalizado para crear eventos con validación adicional.
+        """
+        if not request.user.is_staff:
+            return Response(
+                {"error": "Solo los administradores pueden crear eventos."}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            {
+                "message": "Evento creado exitosamente",
+                "event": serializer.data
+            }, 
+            status=status.HTTP_201_CREATED, 
+            headers=headers
+        )
 
 
 def get_weather_description(code):
