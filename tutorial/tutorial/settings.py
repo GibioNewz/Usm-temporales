@@ -19,7 +19,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # settings.py
 LOGIN_REDIRECT_URL = '/' 
 LOGOUT_REDIRECT_URL = '/' 
-
+SITE_ID = 1 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
@@ -45,16 +45,24 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken', # Necesario para la autenticación por token básica de DRF
     'dj_rest_auth',
+    'dj_rest_auth.registration',
     'rest_framework_simplejwt', # Para JWT (JSON Web Tokens)
+    "corsheaders",
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
 ]
 
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware", 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    "allauth.account.middleware.AccountMiddleware", 
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -195,6 +203,7 @@ REST_AUTH = {
     'JWT_AUTH_REFRESH_COOKIE': 'jwt-refresh',
 }
 
+
 # Configuración de sesiones para navegadores
 SESSION_COOKIE_AGE = 86400  # 24 horas
 SESSION_SAVE_EVERY_REQUEST = True
@@ -208,3 +217,4 @@ CSRF_COOKIE_SECURE = False  # True en producción con HTTPS
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'http://localhost:8000']
+CORS_ALLOWED_ORIGINS = ["http://localhost:8001"]
