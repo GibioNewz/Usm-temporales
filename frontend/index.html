@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdn.jsdelivr.net; connect-src http://192.168.1.81:8000; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;">
+  <title>Panel del Clima</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <div id="app-container">
+    <header>
+      <nav id="main-nav">
+        <a href="#" class="nav-link active" data-view="clima">Clima</a>
+        <a href="#" class="nav-link" data-view="extras">Extras</a>
+        <a href="#" class="nav-link" data-view="horario">Horario de Clases</a>
+      </nav>
+      <div class="theme-switch-wrapper">
+          <label class="theme-switch" for="theme-slider">
+              <input type="checkbox" id="theme-slider" />
+              <div class="slider round"></div>
+          </label>
+      </div>
+    </header>
+
+    <main>
+      <section id="view-clima" class="view active">
+        <div class="card-grid">
+          <div class="card now">
+            <h2>Ahora</h2>
+            <div class="now-content">
+              <div class="now-text">
+                <p class="temp"><span id="current-temp">--</span>&deg;C</p>
+                <p class="desc" id="current-desc">Cargando...</p>
+              </div>
+              <span id="now-icon" class="material-symbols-outlined"></span>
+            </div>
+            <div class="details">
+              <p>Viento: <span id="current-wind">--</span> km/h</p>
+              <p>Humedad: <span id="current-humidity">--</span>%</p>
+            </div>
+          </div>
+          
+          <div class="card hourly-full">
+            <h2>Próximas 24 Horas</h2>
+            <div class="hourly-container">
+              <div id="hourly-scroll-content" class="hourly-scroll-content">
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-extras" class="view">
+          <div class="card">
+              <div class="summary-grid">
+                <div class="summary-card"><span>Sensación</span><strong id="summary-sensation">--°C</strong></div>
+                <div class="summary-card"><span>UV máx hoy</span><strong id="summary-uv">--</strong></div>
+                <div class="summary-card"><span>Visib. máx</span><strong id="summary-visib">-- km</strong></div>
+                <div class="summary-card"><span>Prec. 24 h</span><strong id="summary-precip">-- mm</strong></div>
+              </div>
+              
+              <div class="extras-container">
+                  <div class="hour-detail-card">
+                      <h3 id="detail-time">00:00 Detalle</h3>
+                      <p class="detail-temp" id="detail-temp">--°C</p>
+                      <div class="detail-content-wrapper">
+                        <ul>
+                            <li>Hum. <span id="detail-hum">--</span>%</li>
+                            <li>UV <span id="detail-uv">--</span></li>
+                            <li>Lluvia <span id="detail-rain">--</span>% / <span id="detail-rain-mm">--</span> mm</li>
+                            <li>Nubes <span id="detail-clouds">--</span>%</li>
+                            <li>Sens. <span id="detail-sensation">--</span>°C</li>
+                        </ul>
+                        <div class="hour-slider-vertical-container">
+                            <input type="range" min="0" max="23" value="23" class="hour-slider-vertical" id="hour-slider-vertical">
+                        </div>
+                      </div>
+                  </div>
+                  <div class="chart-container">
+                      <canvas id="weather-chart"></canvas>
+                  </div>
+              </div>
+          </div>
+      </section>
+
+      <section id="view-horario" class="view">
+         <div class="card">
+          <h2>Horario de Clases</h2>
+          <table class="schedule-table">
+              <thead><tr><th>Bloque</th><th>Horario</th><th>Riesgo Lluvia</th></tr></thead>
+              <tbody>
+                  <tr data-block="1-2"><td>1-2</td><td>08:15-09:25</td><td class="rain-risk">--%</td></tr>
+                  <tr data-block="3-4"><td>3-4</td><td>09:40-10:50</td><td class="rain-risk">--%</td></tr>
+                  <tr data-block="5-6"><td>5-6</td><td>11:05-12:15</td><td class="rain-risk">--%</td></tr>
+                  <tr data-block="7-8"><td>7-8</td><td>12:30-13:40</td><td class="rain-risk">--%</td></tr>
+                  <tr data-block="9-10"><td>9-10</td><td>14:00-15:10</td><td class="rain-risk">--%</td></tr>
+                  <tr data-block="11-12"><td>11-12</td><td>15:30-16:40</td><td class="rain-risk">--%</td></tr>
+                  <tr data-block="13-14"><td>13-14</td><td>17:00-18:10</td><td class="rain-risk">--%</td></tr>
+                  <tr data-block="15-16"><td>15-16</td><td>18:30-19:40</td><td class="rain-risk">--%</td></tr>
+              </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="ppp-data.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>
