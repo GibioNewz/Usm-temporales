@@ -135,7 +135,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-        'rest_framework.authentication.SessionAuthentication', # Útil para la API navegable de DRF
+        'rest_framework.authentication.SessionAuthentication', # Para sesiones de navegador
+        'rest_framework.authentication.TokenAuthentication',   # Para tokens DRF tradicionales
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         # Permite acceso de solo lectura a usuarios no autenticados,
@@ -143,7 +144,14 @@ REST_FRAMEWORK = {
         # Puedes cambiar esto a 'rest_framework.permissions.IsAuthenticated'
         # para requerir autenticación para CUALQUIER acceso a la API.
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
-    )
+    ),
+    # Configuración para la API navegable de DRF
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer', # Para la interfaz web de DRF
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20
 }
 
 # JWT Configuration
@@ -186,3 +194,17 @@ REST_AUTH = {
     'JWT_AUTH_COOKIE': 'jwt-auth',
     'JWT_AUTH_REFRESH_COOKIE': 'jwt-refresh',
 }
+
+# Configuración de sesiones para navegadores
+SESSION_COOKIE_AGE = 86400  # 24 horas
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_SECURE = False  # True en producción con HTTPS
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+
+# Configuración CSRF para sesiones de navegador
+CSRF_COOKIE_SECURE = False  # True en producción con HTTPS
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'http://localhost:8000']
