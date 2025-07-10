@@ -26,13 +26,15 @@ function initNavigation() {
   const navLinks = document.querySelectorAll('.nav-link');
   const views = document.querySelectorAll('.view');
   navLinks.forEach(link => {
-    link.addEventListener('click', (event) => {
-      event.preventDefault();
-      const targetViewId = 'view-' + link.dataset.view;
-      navLinks.forEach(nav => nav.classList.remove('active'));
-      link.classList.add('active');
-      views.forEach(view => view.classList.toggle('active', view.id === targetViewId));
-    });
+    if (link.dataset.view) {
+      link.addEventListener('click', (event) => {
+        event.preventDefault();
+        const target = 'view-' + link.dataset.view;
+        navLinks.forEach(n => n.classList.remove('active'));
+        link.classList.add('active');
+        views.forEach(v => v.classList.toggle('active', v.id === target));
+      });
+    }
   });
 }
 
