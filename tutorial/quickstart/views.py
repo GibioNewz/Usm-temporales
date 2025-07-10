@@ -172,7 +172,7 @@ class EventViewSet(viewsets.ModelViewSet):
         - Usuarios autenticados pueden ver eventos (GET)
         """
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+            permission_classes = [permissions.IsAuthenticated]
         else:
             permission_classes = [permissions.IsAuthenticatedOrReadOnly]
         
@@ -189,11 +189,6 @@ class EventViewSet(viewsets.ModelViewSet):
         """
         Endpoint personalizado para crear eventos con validación adicional.
         """
-        if not request.user.is_staff:
-            return Response(
-                {"error": "Solo los administradores pueden crear eventos."}, 
-                status=status.HTTP_403_FORBIDDEN
-            )
         
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
