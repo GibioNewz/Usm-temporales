@@ -29,3 +29,28 @@ class PuntoMonitoreo(models.Model):
         verbose_name = "Punto de Monitoreo"
         verbose_name_plural = "Puntos de Monitoreo"
         ordering = ['nombre'] # Ordenar por nombre por defecto
+
+
+class Event(models.Model):
+    title = models.CharField(max_length=200, help_text="Título del evento")
+    description = models.TextField(help_text="Descripción detallada del evento")
+    date = models.DateTimeField(help_text="Fecha y hora del evento")
+    
+    # Relacionar con el usuario administrador que creó el evento
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='events_created',
+        help_text="Administrador que creó este evento"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True, help_text="Fecha y hora de creación del evento")
+    updated_at = models.DateTimeField(auto_now=True, help_text="Fecha y hora de última actualización")
+
+    def __str__(self):
+        return f"{self.title} - {self.date.strftime('%Y-%m-%d')}"
+
+    class Meta:
+        verbose_name = "Evento"
+        verbose_name_plural = "Eventos"
+        ordering = ['-date']  # Ordenar por fecha descendente por defecto

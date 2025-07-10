@@ -1,6 +1,5 @@
 # quickstart/views.py
 
-# --- Tus imports existentes ---
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 import openmeteo_requests
@@ -8,96 +7,117 @@ import requests_cache
 from retry_requests import retry
 import numpy as np
 from datetime import datetime
-# --- Fin de tus imports existentes ---
 
-# --- Nuevos imports para DRF y tu CRUD ---
-from rest_framework import viewsets, permissions
-from .models import PuntoMonitoreo       # Importa tu modelo
-from .serializers import PuntoMonitoreoSerializer # Importa tu serializer
-# --- Fin de nuevos imports ---
+from rest_framework import viewsets, permissions, status
+from rest_framework.response import Response
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from django.contrib.auth import authenticate, login, logout
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from .models import PuntoMonitoreo, Event
+from .serializers import PuntoMonitoreoSerializer, EventSerializer
 
-
-# --- Tus vistas existentes (hello_world, weather_report) ---
-# Puedes dejarlas aquí si aún las necesitas para algo.
 def hello_world(request):
     return HttpResponse("Hello, World!")
 
 def weather_report(request):
-    # ... (todo tu código de weather_report) ...
-    # Setup the Open-Meteo API client with cache and retry on error
+    # Configurar el cliente de la API Open-Meteo con cache y reintentos en caso de error
     cache_session = requests_cache.CachedSession('.cache', expire_after=3600)
     retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
     openmeteo = openmeteo_requests.Client(session=retry_session)
     
-    # Hardcoded parameters
+    # Parámetros predefinidos
     url = "https://api.open-meteo.com/v1/forecast"
     params = {
-        "latitude": 52.52,  # Berlin
-        "longitude": 13.41,
+        "latitude": -33.49036578221527,
+        "longitude": -70.61876212713469,
         "current": ["temperature_2m", "weather_code", "wind_speed_10m"],
-        "hourly": ["temperature_2m", "relative_humidity_2m", "precipitation_probability"],
+        "hourly": [
+            "temperature_2m", 
+            "relative_humidity_2m", 
+            "precipitation_probability",
+            "apparent_temperature",
+            "precipitation",
+            "cloud_cover",
+            "visibility",
+            "uv_index"
+        ],
         "daily": ["weather_code", "temperature_2m_max", "temperature_2m_min", "sunrise", "sunset"],
-        "timezone": "Europe/Berlin",
+        "timezone": "America/Santiago",
         "forecast_days": 3
     }
     
-    # Make the API request
+    # Realizar la petición a la API
     responses = openmeteo.weather_api(url, params=params)
     response = responses[0]
     
-    # Process the current data
+    # Procesar los datos actuales
     current = response.Current()
+    weather_code = int(current.Variables(1).Value())
     current_data = {
         "temperature": float(current.Variables(0).Value()),
-        "weather_code": int(current.Variables(1).Value()),
+        "weather_code": weather_code,
+        "weather_description": get_weather_description(weather_code),
         "wind_speed": float(current.Variables(2).Value()),
     }
     
-    # Process hourly data for the next 24 hours
+    # Procesar datos por hora con extracción de tiempo simplificada
     hourly = response.Hourly()
-    hourly_time_np = hourly.Time() # Start time of the forecast range
-    hourly_time_end_np = hourly.TimeEnd()
-    hourly_interval_seconds = hourly.Interval()
-
-    # Generate actual timestamps for hourly data
-    hourly_timestamps = np.arange(hourly_time_np, hourly_time_end_np, hourly_interval_seconds)
-    hourly_time_iso = [datetime.utcfromtimestamp(ts).isoformat() + "Z" for ts in hourly_timestamps]
-
-    hourly_temp = hourly.Variables(0).ValuesAsNumpy().tolist()
-    hourly_humidity = hourly.Variables(1).ValuesAsNumpy().tolist()
-    hourly_precip = hourly.Variables(2).ValuesAsNumpy().tolist()
-        
+    
+    try:
+        hourly_time = hourly.Time().ValuesAsNumpy().astype(str).tolist()[:24]
+    except (AttributeError, TypeError):
+        hourly_time_np = hourly.Time()
+        hourly_time = []
+        for i in range(24):
+            if isinstance(hourly_time_np, np.ndarray):
+                hourly_time.append(str(hourly_time_np[i]))
+            else:
+                try:
+                    hourly_time.append(hourly_time_np.isoformat())
+                except AttributeError:
+                    hourly_time.append(str(hourly_time_np))
+    
     hourly_data = {
-        "time": hourly_time_iso[:24], # Show up to 24 hours
-        "temperature": hourly_temp[:24],
-        "humidity": hourly_humidity[:24],
-        "precipitation_probability": hourly_precip[:24],
+        "time": hourly_time,
+        "temperature": hourly.Variables(0).ValuesAsNumpy().tolist()[:24],
+        "humidity": hourly.Variables(1).ValuesAsNumpy().tolist()[:24],
+        "precipitation_probability": hourly.Variables(2).ValuesAsNumpy().tolist()[:24],
+        "apparent_temperature": hourly.Variables(3).ValuesAsNumpy().tolist()[:24],
+        "precipitation": hourly.Variables(4).ValuesAsNumpy().tolist()[:24],
+        "cloud_cover": hourly.Variables(5).ValuesAsNumpy().tolist()[:24],
+        "visibility": hourly.Variables(6).ValuesAsNumpy().tolist()[:24],
+        "uv_index": hourly.Variables(7).ValuesAsNumpy().tolist()[:24]
     }
     
-    # Process daily data
+    # Procesar datos diarios
     daily = response.Daily()
-    daily_time_np = daily.Time() # Start time of the daily forecast range
-    daily_time_end_np = daily.TimeEnd()
-    daily_interval_seconds = daily.Interval()
-
-    # Generate actual timestamps for daily data
-    daily_timestamps = np.arange(daily_time_np, daily_time_end_np, daily_interval_seconds)
-    daily_time_iso = [datetime.utcfromtimestamp(ts).date().isoformat() for ts in daily_timestamps]
-    
     daily_weather_code = daily.Variables(0).ValuesAsNumpy().tolist()
     daily_temp_max = daily.Variables(1).ValuesAsNumpy().tolist()
     daily_temp_min = daily.Variables(2).ValuesAsNumpy().tolist()
     
-    # Sunrise and sunset are also arrays
-    daily_sunrise_np = daily.Variables(3).ValuesAsNumpy()
-    daily_sunset_np = daily.Variables(4).ValuesAsNumpy()
+    daily_time_np = daily.Time()
+    daily_time = []
+    for i in range(len(daily_weather_code)):
+        if isinstance(daily_time_np, np.ndarray):
+            daily_time.append(str(daily_time_np[i]))
+        else:
+            try:
+                daily_time.append(daily_time_np.isoformat())
+            except AttributeError:
+                daily_time.append(str(daily_time_np))
     
-    sunrise_times = [datetime.utcfromtimestamp(ts).isoformat() + "Z" for ts in daily_sunrise_np]
-    sunset_times = [datetime.utcfromtimestamp(ts).isoformat() + "Z" for ts in daily_sunset_np]
-
+    sunrise_times = []
+    sunset_times = []
+    for i in range(len(daily_time)):
+        sunrise_times.append(str(daily.Variables(3).Value()))
+        sunset_times.append(str(daily.Variables(4).Value()))
+    
     daily_data = {
-        "time": daily_time_iso,
+        "time": daily_time,
         "weather_code": daily_weather_code,
+        "weather_descriptions": [get_weather_description(int(code)) for code in daily_weather_code],
         "temperature_max": daily_temp_max,
         "temperature_min": daily_temp_min,
         "sunrise": sunrise_times,
@@ -108,28 +128,21 @@ def weather_report(request):
         "current": current_data,
         "hourly": hourly_data,
         "daily": daily_data,
-        "location": "Berlin, Germany", # Still hardcoded for now
+        "location": "USM San Joaquín",
         "latitude": params["latitude"],
         "longitude": params["longitude"],
         "timezone": params["timezone"],
     }
     
     return JsonResponse(weather_data)
-# --- Fin de tus vistas existentes ---
 
 
-# --- NUEVO ViewSet para PuntoMonitoreo ---
 class PuntoMonitoreoViewSet(viewsets.ModelViewSet):
     """
     API endpoint que permite crear, ver, editar y eliminar Puntos de Monitoreo.
     """
-    queryset = PuntoMonitoreo.objects.all().order_by('nombre') # Obtiene todos los objetos, ordenados por nombre.
-    serializer_class = PuntoMonitoreoSerializer          # Usa el serializer que acabamos de crear.
-    
-    # Define los permisos para este ViewSet.
-    # IsAuthenticatedOrReadOnly permite que cualquiera lea los datos (GET, HEAD, OPTIONS),
-    # pero solo los usuarios autenticados pueden crear, actualizar o eliminar (POST, PUT, PATCH, DELETE).
-    # Si quieres que todas las acciones requieran autenticación, usa [permissions.IsAuthenticated].
+    queryset = PuntoMonitoreo.objects.all().order_by('nombre')
+    serializer_class = PuntoMonitoreoSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def perform_create(self, serializer):
@@ -140,9 +153,475 @@ class PuntoMonitoreoViewSet(viewsets.ModelViewSet):
         if self.request.user.is_authenticated:
             serializer.save(creado_por=self.request.user)
         else:
-            # Si quieres permitir que usuarios anónimos creen puntos (y 'creado_por' puede ser nulo en tu modelo):
-            # serializer.save()
-            # Sin embargo, con IsAuthenticatedOrReadOnly, un anónimo no podrá hacer POST.
-            # Si cambias el permiso a AllowAny para POST, esta lógica sería relevante.
-            # Por ahora, con IsAuthenticatedOrReadOnly, este 'else' no se alcanzará en un POST exitoso.
-            serializer.save() # Si creado_por puede ser nulo y el permiso es más laxo.
+            serializer.save()
+
+
+class EventViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint que permite crear, ver, editar y eliminar Eventos.
+    Solo los administradores pueden crear, editar y eliminar eventos.
+    Los usuarios autenticados pueden ver los eventos.
+    """
+    queryset = Event.objects.all().order_by('-date')
+    serializer_class = EventSerializer
+    
+    def get_permissions(self):
+        """
+        Permisos personalizados:
+        - Solo administradores pueden crear, editar y eliminar eventos
+        - Usuarios autenticados pueden ver eventos (GET)
+        """
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            permission_classes = [permissions.IsAuthenticated]
+        else:
+            permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+        
+        return [permission() for permission in permission_classes]
+
+    def perform_create(self, serializer):
+        """
+        Personaliza la creación de un evento.
+        Asigna automáticamente el usuario autenticado como 'created_by'.
+        """
+        serializer.save(created_by=self.request.user)
+    
+    def create(self, request, *args, **kwargs):
+        """
+        Endpoint personalizado para crear eventos con validación adicional.
+        """
+        
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            {
+                "message": "Evento creado exitosamente",
+                "event": serializer.data
+            }, 
+            status=status.HTTP_201_CREATED, 
+            headers=headers
+        )
+
+
+def get_weather_description(code):
+    """
+    Convierte códigos meteorológicos WMO a descripciones en español.
+    """
+    weather_descriptions = {
+        0: "Cielo despejado",
+        1: "Principalmente despejado",
+        2: "Parcialmente nublado",
+        3: "Nublado",
+        45: "Niebla",
+        48: "Niebla con escarcha",
+        51: "Llovizna ligera",
+        53: "Llovizna moderada",
+        55: "Llovizna intensa",
+        56: "Llovizna helada ligera",
+        57: "Llovizna helada intensa",
+        61: "Lluvia ligera",
+        63: "Lluvia moderada",
+        65: "Lluvia intensa",
+        66: "Lluvia helada ligera",
+        67: "Lluvia helada intensa",
+        71: "Nieve ligera",
+        73: "Nieve moderada",
+        75: "Nieve intensa",
+        77: "Granizo de nieve",
+        80: "Chubascos ligeros",
+        81: "Chubascos moderados",
+        82: "Chubascos violentos",
+        85: "Chubascos de nieve ligeros",
+        86: "Chubascos de nieve intensos",
+        95: "Tormenta eléctrica",
+        96: "Tormenta eléctrica con granizo ligero",
+        99: "Tormenta eléctrica con granizo intenso"
+    }
+    return weather_descriptions.get(code, f"Código meteorológico desconocido: {code}")
+
+
+def get_weather_data():
+    """
+    Función auxiliar para obtener datos meteorológicos de la API Open-Meteo.
+    Retorna la respuesta meteorológica procesada.
+    """
+    # Configurar el cliente de la API Open-Meteo con cache y reintentos en caso de error
+    cache_session = requests_cache.CachedSession('.cache', expire_after=3600)
+    retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
+    openmeteo = openmeteo_requests.Client(session=retry_session)
+    
+    # Parámetros predefinidos
+    url = "https://api.open-meteo.com/v1/forecast"
+    params = {
+        "latitude": -33.49036578221527,
+        "longitude": -70.61876212713469,
+        "current": ["temperature_2m", "weather_code", "wind_speed_10m"],
+        "hourly": [
+            "temperature_2m", 
+            "relative_humidity_2m", 
+            "precipitation_probability",
+            "apparent_temperature",  
+            "precipitation",         
+            "cloud_cover",           
+            "visibility",            
+            "uv_index"               
+        ],
+        "daily": ["weather_code", "temperature_2m_max", "temperature_2m_min", "sunrise", "sunset"],
+        "timezone": "America/Santiago",
+        "forecast_days": 3
+    }
+    
+    # Realizar la petición a la API
+    responses = openmeteo.weather_api(url, params=params)
+    return responses[0]
+
+
+def uv_index(request):
+    """
+    Retorna únicamente datos del índice UV para las próximas 24 horas.
+    """
+    response = get_weather_data()
+    hourly = response.Hourly()
+    
+    try:
+        hourly_time = hourly.Time().ValuesAsNumpy().astype(str).tolist()[:24]
+    except (AttributeError, TypeError):
+        hourly_time_np = hourly.Time()
+        hourly_time = []
+        for i in range(24):
+            if isinstance(hourly_time_np, np.ndarray):
+                hourly_time.append(str(hourly_time_np[i]))
+            else:
+                try:
+                    hourly_time.append(hourly_time_np.isoformat())
+                except AttributeError:
+                    hourly_time.append(str(hourly_time_np))
+    
+    uv_data = {
+        "time": hourly_time,
+        "uv_index": hourly.Variables(7).ValuesAsNumpy().tolist()[:24],
+        "location": "USM San Joaquín",
+        "parameter": "Índice UV"
+    }
+    
+    return JsonResponse(uv_data)
+
+
+def temperature(request):
+    """
+    Retorna datos de temperatura (actual y por hora para las próximas 24 horas).
+    """
+    response = get_weather_data()
+    current = response.Current()
+    hourly = response.Hourly()
+    
+    try:
+        hourly_time = hourly.Time().ValuesAsNumpy().astype(str).tolist()[:24]
+    except (AttributeError, TypeError):
+        hourly_time_np = hourly.Time()
+        hourly_time = []
+        for i in range(24):
+            if isinstance(hourly_time_np, np.ndarray):
+                hourly_time.append(str(hourly_time_np[i]))
+            else:
+                try:
+                    hourly_time.append(hourly_time_np.isoformat())
+                except AttributeError:
+                    hourly_time.append(str(hourly_time_np))
+    
+    temp_data = {
+        "current_temperature": float(current.Variables(0).Value()),
+        "hourly": {
+            "time": hourly_time,
+            "temperature": hourly.Variables(0).ValuesAsNumpy().tolist()[:24],
+            "apparent_temperature": hourly.Variables(3).ValuesAsNumpy().tolist()[:24]
+        },
+        "location": "USM San Joaquín",
+        "parameter": "Temperatura",
+        "unit": "°C"
+    }
+    
+    return JsonResponse(temp_data)
+
+
+def humidity(request):
+    """
+    Retorna datos de humedad para las próximas 24 horas.
+    """
+    response = get_weather_data()
+    hourly = response.Hourly()
+    
+    try:
+        hourly_time = hourly.Time().ValuesAsNumpy().astype(str).tolist()[:24]
+    except (AttributeError, TypeError):
+        hourly_time_np = hourly.Time()
+        hourly_time = []
+        for i in range(24):
+            if isinstance(hourly_time_np, np.ndarray):
+                hourly_time.append(str(hourly_time_np[i]))
+            else:
+                try:
+                    hourly_time.append(hourly_time_np.isoformat())
+                except AttributeError:
+                    hourly_time.append(str(hourly_time_np))
+    
+    humidity_data = {
+        "time": hourly_time,
+        "humidity": hourly.Variables(1).ValuesAsNumpy().tolist()[:24],
+        "location": "USM San Joaquín",
+        "parameter": "Humedad Relativa",
+        "unit": "%"
+    }
+    
+    return JsonResponse(humidity_data)
+
+
+def precipitation(request):
+    """
+    Retorna datos de precipitación (probabilidad y cantidad) para las próximas 24 horas.
+    """
+    response = get_weather_data()
+    hourly = response.Hourly()
+    
+    try:
+        hourly_time = hourly.Time().ValuesAsNumpy().astype(str).tolist()[:24]
+    except (AttributeError, TypeError):
+        hourly_time_np = hourly.Time()
+        hourly_time = []
+        for i in range(24):
+            if isinstance(hourly_time_np, np.ndarray):
+                hourly_time.append(str(hourly_time_np[i]))
+            else:
+                try:
+                    hourly_time.append(hourly_time_np.isoformat())
+                except AttributeError:
+                    hourly_time.append(str(hourly_time_np))
+    
+    precip_data = {
+        "time": hourly_time,
+        "precipitation_probability": hourly.Variables(2).ValuesAsNumpy().tolist()[:24],
+        "precipitation_amount": hourly.Variables(4).ValuesAsNumpy().tolist()[:24],
+        "location": "USM San Joaquín",
+        "parameter": "Precipitación",
+        "units": {
+            "probability": "%",
+            "amount": "mm"
+        }
+    }
+    
+    return JsonResponse(precip_data)
+
+
+def wind_speed(request):
+    """
+    Retorna datos de velocidad del viento actual.
+    """
+    response = get_weather_data()
+    current = response.Current()
+    
+    wind_data = {
+        "current_wind_speed": float(current.Variables(2).Value()),
+        "location": "USM San Joaquín",
+        "parameter": "Velocidad del Viento",
+        "unit": "km/h",
+        "timestamp": datetime.now().isoformat()
+    }
+    
+    return JsonResponse(wind_data)
+
+
+def visibility(request):
+    """
+    Retorna datos de visibilidad para las próximas 24 horas.
+    """
+    response = get_weather_data()
+    hourly = response.Hourly()
+    
+    try:
+        hourly_time = hourly.Time().ValuesAsNumpy().astype(str).tolist()[:24]
+    except (AttributeError, TypeError):
+        hourly_time_np = hourly.Time()
+        hourly_time = []
+        for i in range(24):
+            if isinstance(hourly_time_np, np.ndarray):
+                hourly_time.append(str(hourly_time_np[i]))
+            else:
+                try:
+                    hourly_time.append(hourly_time_np.isoformat())
+                except AttributeError:
+                    hourly_time.append(str(hourly_time_np))
+    
+    visibility_data = {
+        "time": hourly_time,
+        "visibility": hourly.Variables(6).ValuesAsNumpy().tolist()[:24],
+        "location": "USM San Joaquín",
+        "parameter": "Visibilidad",
+        "unit": "m"
+    }
+    
+    return JsonResponse(visibility_data)
+
+
+def cloud_cover(request):
+    """
+    Retorna datos de cobertura de nubes para las próximas 24 horas.
+    """
+    response = get_weather_data()
+    hourly = response.Hourly()
+    
+    try:
+        hourly_time = hourly.Time().ValuesAsNumpy().astype(str).tolist()[:24]
+    except (AttributeError, TypeError):
+        hourly_time_np = hourly.Time()
+        hourly_time = []
+        for i in range(24):
+            if isinstance(hourly_time_np, np.ndarray):
+                hourly_time.append(str(hourly_time_np[i]))
+            else:
+                try:
+                    hourly_time.append(hourly_time_np.isoformat())
+                except AttributeError:
+                    hourly_time.append(str(hourly_time_np))
+    
+    cloud_data = {
+        "time": hourly_time,
+        "cloud_cover": hourly.Variables(5).ValuesAsNumpy().tolist()[:24],
+        "location": "USM San Joaquín",
+        "parameter": "Cobertura de Nubes",
+        "unit": "%"
+    }
+    
+    return JsonResponse(cloud_data)
+
+
+def weather_summary(request):
+    """
+    Retorna un resumen de las condiciones meteorológicas actuales.
+    """
+    response = get_weather_data()
+    current = response.Current()
+    
+    weather_code = int(current.Variables(1).Value())
+    
+    summary_data = {
+        "current_conditions": {
+            "temperature": float(current.Variables(0).Value()),
+            "weather_code": weather_code,
+            "weather_description": get_weather_description(weather_code),
+            "wind_speed": float(current.Variables(2).Value())
+        },
+        "location": "USM San Joaquín",
+        "parameter": "Resumen Meteorológico",
+        "timestamp": datetime.now().isoformat(),
+        "units": {
+            "temperature": "°C",
+            "wind_speed": "km/h"
+        }
+    }
+    
+    return JsonResponse(summary_data)
+
+
+# Session-based authentication views for browser support
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def session_login(request):
+    """
+    Login endpoint for browser sessions using cookies.
+    Alternative to JWT for traditional web applications.
+    """
+    username = request.data.get('username')
+    password = request.data.get('password')
+    
+    if not username or not password:
+        return Response(
+            {'error': 'Username and password required'}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    user = authenticate(request, username=username, password=password)
+    if user:
+        login(request, user)
+        return Response({
+            'message': 'Successfully logged in',
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'is_staff': user.is_staff,
+                'is_superuser': user.is_superuser,
+            }
+        })
+    else:
+        return Response(
+            {'error': 'Invalid credentials'}, 
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+
+
+@api_view(['POST'])
+def session_logout(request):
+    """
+    Logout endpoint for browser sessions.
+    Clears the session cookie.
+    """
+    logout(request)
+    return Response({'message': 'Successfully logged out'})
+
+
+@api_view(['GET'])
+def session_user(request):
+    """
+    Get current user information for session-based authentication.
+    Returns user details if authenticated, otherwise returns anonymous user info.
+    """
+    if request.user.is_authenticated:
+        return Response({
+            'authenticated': True,
+            'user': {
+                'id': request.user.id,
+                'username': request.user.username,
+                'email': request.user.email,
+                'is_staff': request.user.is_staff,
+                'is_superuser': request.user.is_superuser,
+            }
+        })
+    else:
+        return Response({
+            'authenticated': False,
+            'user': None
+        })
+
+
+@api_view(['GET'])
+def auth_status(request):
+    """
+    Check authentication status across all auth methods (JWT, Session, Token).
+    Useful for debugging and frontend authentication state management.
+    """
+    auth_info = {
+        'authenticated': request.user.is_authenticated,
+        'user': None,
+        'auth_method': None
+    }
+    
+    if request.user.is_authenticated:
+        auth_info['user'] = {
+            'id': request.user.id,
+            'username': request.user.username,
+            'email': request.user.email,
+            'is_staff': request.user.is_staff,
+            'is_superuser': request.user.is_superuser,
+        }
+        
+        # Determine authentication method
+        if hasattr(request, 'auth') and request.auth:
+            if hasattr(request.auth, 'token_type'):
+                auth_info['auth_method'] = 'JWT'
+            else:
+                auth_info['auth_method'] = 'Token'
+        elif request.user.is_authenticated:
+            auth_info['auth_method'] = 'Session'
+    
+    return Response(auth_info)

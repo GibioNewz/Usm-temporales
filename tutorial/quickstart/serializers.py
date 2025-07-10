@@ -1,6 +1,6 @@
 # quickstart/serializers.py
 from rest_framework import serializers
-from .models import PuntoMonitoreo
+from .models import PuntoMonitoreo, Event
 # Si vas a mostrar información del usuario (como el username del creador)
 # from django.contrib.auth.models import User # Ya no es necesario si usas settings.AUTH_USER_MODEL y source en el campo
 
@@ -31,3 +31,20 @@ class PuntoMonitoreoSerializer(serializers.ModelSerializer):
         # Si quieres que algunos campos sean de solo lectura en la API (además de los definidos explícitamente):
         # read_only_fields = ['fecha_creacion', 'ultima_actualizacion']
         # (aunque auto_now_add y auto_now ya hacen que sean de solo lectura a nivel de modelo)
+
+class EventSerializer(serializers.ModelSerializer):
+    # Campo de solo lectura para mostrar el username del administrador que creó el evento
+    created_by_username = serializers.ReadOnlyField(source='created_by.username')
+
+    class Meta:
+        model = Event
+        fields = [
+            'id',
+            'title',
+            'description', 
+            'date',
+            'created_by_username',
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = ['created_by_username', 'created_at', 'updated_at']

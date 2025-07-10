@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Listado de Eventos y Puntos</title>
+
+<!-- —— Paleta rosada y tipografía sencilla —— -->
+<style>
+ :root{
+   --pink:#dc136c;
+   --pink-light:#fde9f3;
+   --gray:#666;
+   font-family:system-ui,sans-serif;
+ }
+ body{margin:0;background:var(--pink-light)}
+ h1{margin:0;padding:1rem;font-size:1.9rem;color:var(--pink)}
+ section{background:#fff;margin:1rem;border-radius:6px;
+         border:4px solid var(--pink-light);}
+ section>h2{margin:0;padding:.8rem 1rem;color:var(--pink);font-size:1.35rem}
+ button{cursor:pointer;padding:.5rem 1.4rem;border:none;border-radius:4px;
+        font-weight:600;font-size:1rem;color:#fff;background:var(--pink);}
+ button:disabled{opacity:.55;cursor:not-allowed}
+ ul{list-style:none;margin:.6rem 0 1.2rem;padding:0}
+ li{border:1px solid #e4e4e4;padding:.8rem;border-radius:4px;margin:.5rem 0}
+ small{color:var(--gray)}
+ .success{background:#e6f6ea;border-color:#bfe5c7}
+ .error{background:#fdecec;border-color:#f3c9c9;color:#c0392b}
+ .empty{font-style:italic;color:var(--gray);padding:.5rem 1rem}
+ header{display:flex;align-items:center;gap:.6rem}
+</style>
+</head>
+<body>
+
+<h1>Listado de Eventos &middot; Puntos</h1>
+
+<!-- 1 · EVENTOS -->
+<section>
+  <header>
+    <h2>1 · Eventos publicados</h2>
+    <button id="btn-ev">Recargar</button>
+  </header>
+  <ul id="ev-list"><li class="empty">— sin eventos —</li></ul>
+</section>
+
+<!-- 2 · PUNTOS -->
+<section>
+  <header>
+    <h2>2 · Puntos de Monitoreo</h2>
+    <button id="btn-pm">Recargar</button>
+  </header>
+  <ul id="pm-list"><li class="empty">— sin puntos —</li></ul>
+</section>
+
+<script>
+/* ========== CONFIG ========== */
+const BASE='http://127.0.0.1:8000';
+const EVENTS_URL = '/api/events/?format=json';
+const PM_URL     = '/api/puntos-monitoreo/?format=json';
+let token = localStorage.getItem('jwt') || null;
+
+/* ========== Helper fetch ========== */
+async function api(url){
+  const opt={};
+  if(token) opt.headers={'Authorization':'Bearer '+token};
+  const r = await fetch(BASE+url,opt);
+  if(!r.ok) throw `HTTP ${r.status}`;
+  return await r.json();
+}
+
+/* ========== Render helpers ========== */
+function liEvento(ev){
+  return `<li>
+    <strong>${ev.title}</strong> &nbsp;<small>${new Date(ev.date).toLocaleString()}</small>
+    <br>${ev.description || '<em>— sin descripción —</em>'}
+    <br><small>Creado por: ${ev.created_by_username || '—'}</small>
+  </li>`;
+}
+function liPunto(p){
+  return `<li>
+    <strong>${p.nombre}</strong>
+    <br>${p.descripcion || '<em>— sin descripción —</em>'}
+    <br><small>Lat: ${p.latitud} · Lon: ${p.longitud} · Creador: ${p.creado_por_username || '—'}</small>
+  </li>`;
+}
+
+/* ========== Listados ========== */
+async function cargarEventos(){
+  const ul=document.getElementById('ev-list');
+  ul.innerHTML='<li class="empty">⌛ cargando…</li>';
+  try{
+    const data=await api(EVENTS_URL);
+    ul.innerHTML = data.length
+      ? data.map(liEvento).join('')
+      : '<li class="empty">— sin eventos —</li>';
+    ul.className='';                            // reset estado
+  }catch(e){
+    ul.innerHTML=`<li class="error">❌ ${e}</li>`;
+  }
+}
+async function cargarPuntos(){
+  const ul=document.getElementById('pm-list');
+  ul.innerHTML='<li class="empty">⌛ cargando…</li>';
+  try{
+    const data=await api(PM_URL);
+    ul.innerHTML = data.length
+      ? data.map(liPunto).join('')
+      : '<li class="empty">— sin puntos —</li>';
+    ul.className='';
+  }catch(e){
+    ul.innerHTML=`<li class="error">❌ ${e}</li>`;
+  }
+}
+
+/* ========== Botones ========== */
+document.getElementById('btn-ev').onclick=cargarEventos;
+document.getElementById('btn-pm').onclick=cargarPuntos;
+
+/* Auto-cargar al abrir */
+cargarEventos();
+cargarPuntos();
+</script>
+</body>
+</html>
