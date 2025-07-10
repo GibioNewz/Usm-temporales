@@ -6,7 +6,6 @@ function createWindow() {
     width: 800,
     height: 600,
     webPreferences: {
-      // Necesario para usar APIs de Node en el renderer
       nodeIntegration: true,
       contextIsolation: false
     }
@@ -16,7 +15,6 @@ function createWindow() {
 
 app.whenReady().then(createWindow);
 
-// En macOS suele reabrir la ventana si se hace clic en el dock
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });

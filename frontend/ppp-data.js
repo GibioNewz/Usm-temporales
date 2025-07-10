@@ -1,5 +1,5 @@
-// ppp-data.js – trae TODOS los endpoints y deja un objeto global PPP
-const ROOT = 'http://127.0.0.1:8000/api/';
+
+const ROOT = 'http://192.168.1.81:8000/api/';
 async function g(p){ const r=await fetch(ROOT+p); return r.json(); }
 
 window.addEventListener('DOMContentLoaded', async()=>{
