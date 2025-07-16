@@ -5,7 +5,6 @@
 <title>Gestión de Eventos (API)</title>
 
 <style>
- /* -------- colores y tipografía -------- */
  :root{
    --pink:#dc136c;        --pink-light:#fde9f3;
    --gray:#666;           --green:#138c36;  --red:#c0392b;
@@ -39,8 +38,6 @@ pre{white-space:pre-wrap;background:#f1f1f1;padding:.6rem;border-radius:4px;
 <h1>Gestión de Eventos (API)
   <span id="badge" class="badge" style="display:none">ONLINE</span>
 </h1>
-
-<!-- 0 · LOGIN / REGISTRO -->
 <section id="auth">
   <h2>0 · Autenticación (JWT)</h2>
 
@@ -48,8 +45,6 @@ pre{white-space:pre-wrap;background:#f1f1f1;padding:.6rem;border-radius:4px;
     <span class="navlink" id="link-login">Login</span> |
     <span class="navlink" id="link-reg">Registro</span>
   </div>
-
-  <!-- FORM LOGIN -->
   <form id="form-login" style="padding:0 1rem 1.2rem">
      <label>Usuario / email
        <input id="l-user" required>
@@ -60,8 +55,6 @@ pre{white-space:pre-wrap;background:#f1f1f1;padding:.6rem;border-radius:4px;
      <button id="btn-login">Login</button>
      <button type="button" id="btn-logout" class="gray">Logout</button>
   </form>
-
-  <!-- FORM REGISTRO -->
   <form id="form-reg" style="display:none;padding:0 1rem 1.2rem">
      <label>Usuario *
        <input id="r-user" required>
@@ -82,8 +75,6 @@ pre{white-space:pre-wrap;background:#f1f1f1;padding:.6rem;border-radius:4px;
 
   <pre id="auth-out" class="error" style="display:none"></pre>
 </section>
-
-<!-- 1 · LISTA EVENTOS -->
 <section>
   <h2>1 · Eventos publicados</h2>
   <div style="padding:0 1rem 1rem">
@@ -91,8 +82,6 @@ pre{white-space:pre-wrap;background:#f1f1f1;padding:.6rem;border-radius:4px;
     <pre id="ev-list" class="success">– sin eventos –</pre>
   </div>
 </section>
-
-<!-- 2 · CREAR EVENTO -->
 <section>
   <h2>2 · Crear nuevo evento</h2>
   <form id="ev-create" style="padding:0 1rem 1.2rem">
@@ -109,8 +98,6 @@ pre{white-space:pre-wrap;background:#f1f1f1;padding:.6rem;border-radius:4px;
     <pre id="ev-create-out" style="display:none"></pre>
   </form>
 </section>
-
-<!-- 3 · LISTA PUNTOS -->
 <section>
   <h2>3 · Puntos de Monitoreo</h2>
   <div style="padding:0 1rem 1rem">
@@ -118,8 +105,6 @@ pre{white-space:pre-wrap;background:#f1f1f1;padding:.6rem;border-radius:4px;
     <pre id="pm-list" class="success">– sin puntos –</pre>
   </div>
 </section>
-
-<!-- 4 · CREAR PUNTO -->
 <section>
   <h2>4 · Crear nuevo Punto</h2>
   <form id="pm-create" style="padding:0 1rem 1.2rem">
@@ -143,7 +128,6 @@ pre{white-space:pre-wrap;background:#f1f1f1;padding:.6rem;border-radius:4px;
 </section>
 
 <script>
-/* ========= CONFIG ========= */
 const BASE = 'http://127.0.0.1:8000';
 const LOGIN_URL = '/api/auth/login/';
 const REG_URL   = '/api/auth/registration/';
@@ -151,19 +135,14 @@ const EVENTS_URL= '/api/events/?format=json';
 const PM_URL    = '/api/puntos-monitoreo/?format=json';
 
 let token = localStorage.getItem('jwt') || null;
-
-/* -------- helpers -------- */
 const $ = sel => document.querySelector(sel);
 function showOut(elem, data, ok=false){
   elem.style.display='block';
   elem.className = ok ? 'success' : 'error';
-
-  // Si es un string muy largo (p. ej. HTML) corta a 400 caracteres
   if (typeof data === 'string') {
       elem.textContent = data.length>400 ? data.slice(0,400)+' …' : data;
       return;
   }
-  // Si es un objeto simple
   elem.textContent = JSON.stringify(data,null,2);
 }
 
@@ -178,8 +157,6 @@ async function api(url, opts = {}){
   if (!resp.ok) throw raw;
   return raw;
 }
-
-/* ========= LOGIN / REG ========= */
 function renderBadge(){
   $('#badge').style.display = token ? 'inline-block' : 'none';
 }
@@ -222,8 +199,6 @@ $('#btn-reg').onclick = async e=>{
     showOut($('#auth-out'), '✓ Registro creado, ya puedes hacer login', true);
   }catch(err){ showOut($('#auth-out'), err); }
 };
-
-/* ========= EVENTOS ========= */
 async function listEvents(){
   try{
     const data = await api(EVENTS_URL);
@@ -245,8 +220,6 @@ $('#ev-create').onsubmit = async e=>{
     listEvents();
   }catch(err){ showOut($('#ev-create-out'),err); }
 };
-
-/* ========= PUNTOS ========= */
 async function listPM(){
   try{
     const data = await api(PM_URL);
@@ -270,7 +243,6 @@ $('#pm-create').onsubmit = async e=>{
   }catch(err){ showOut($('#pm-create-out'),err); }
 };
 
-/* Auto */
 renderBadge();
 listEvents();
 listPM();

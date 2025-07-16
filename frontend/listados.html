@@ -3,8 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>Listado de Eventos y Puntos</title>
-
-<!-- —— Paleta rosada y tipografía sencilla —— -->
 <style>
  :root{
    --pink:#dc136c;
@@ -32,8 +30,6 @@
 <body>
 
 <h1>Listado de Eventos &middot; Puntos</h1>
-
-<!-- 1 · EVENTOS -->
 <section>
   <header>
     <h2>1 · Eventos publicados</h2>
@@ -41,8 +37,6 @@
   </header>
   <ul id="ev-list"><li class="empty">— sin eventos —</li></ul>
 </section>
-
-<!-- 2 · PUNTOS -->
 <section>
   <header>
     <h2>2 · Puntos de Monitoreo</h2>
@@ -52,13 +46,10 @@
 </section>
 
 <script>
-/* ========== CONFIG ========== */
 const BASE='http://127.0.0.1:8000';
 const EVENTS_URL = '/api/events/?format=json';
 const PM_URL     = '/api/puntos-monitoreo/?format=json';
 let token = localStorage.getItem('jwt') || null;
-
-/* ========== Helper fetch ========== */
 async function api(url){
   const opt={};
   if(token) opt.headers={'Authorization':'Bearer '+token};
@@ -66,8 +57,6 @@ async function api(url){
   if(!r.ok) throw `HTTP ${r.status}`;
   return await r.json();
 }
-
-/* ========== Render helpers ========== */
 function liEvento(ev){
   return `<li>
     <strong>${ev.title}</strong> &nbsp;<small>${new Date(ev.date).toLocaleString()}</small>
@@ -82,8 +71,6 @@ function liPunto(p){
     <br><small>Lat: ${p.latitud} · Lon: ${p.longitud} · Creador: ${p.creado_por_username || '—'}</small>
   </li>`;
 }
-
-/* ========== Listados ========== */
 async function cargarEventos(){
   const ul=document.getElementById('ev-list');
   ul.innerHTML='<li class="empty">⌛ cargando…</li>';
@@ -92,7 +79,7 @@ async function cargarEventos(){
     ul.innerHTML = data.length
       ? data.map(liEvento).join('')
       : '<li class="empty">— sin eventos —</li>';
-    ul.className='';                            // reset estado
+    ul.className='';                           
   }catch(e){
     ul.innerHTML=`<li class="error">❌ ${e}</li>`;
   }
@@ -111,11 +98,9 @@ async function cargarPuntos(){
   }
 }
 
-/* ========== Botones ========== */
 document.getElementById('btn-ev').onclick=cargarEventos;
 document.getElementById('btn-pm').onclick=cargarPuntos;
 
-/* Auto-cargar al abrir */
 cargarEventos();
 cargarPuntos();
 </script>
