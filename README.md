@@ -116,15 +116,11 @@ python manage.py runserver
 
 ### Frontend (Electron)
 
-1. **Instalar dependencias**
-```bash
-cd frontend
-npm install
-```
 
-2. **Ejecutar aplicación Electron**
+1. **Ejecutar aplicación Electron**
 ```bash
-npm start
+ cd frontend
+ python -m http.server 8001
 ```
 
 ## API Endpoints

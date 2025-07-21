@@ -54,3 +54,133 @@ class Event(models.Model):
         verbose_name = "Evento"
         verbose_name_plural = "Eventos"
         ordering = ['-date']  # Ordenar por fecha descendente por defecto
+
+
+class Departamento(models.Model):
+    codigo = models.CharField(max_length=10, unique=True, help_text="Código del departamento, ej: 'INF', 'FIS', 'MAT'")
+    nombre = models.CharField(max_length=200, help_text="Nombre completo del departamento")
+    descripcion = models.TextField(blank=True, null=True, help_text="Descripción del departamento")
+    
+    def __str__(self):
+        return f"{self.codigo} - {self.nombre}"
+    
+    class Meta:
+        verbose_name = "Departamento"
+        verbose_name_plural = "Departamentos"
+        ordering = ['codigo']
+
+
+class Asignatura(models.Model):
+    departamento = models.ForeignKey(
+        Departamento,
+        on_delete=models.CASCADE,
+        related_name='asignaturas',
+        help_text="Departamento al que pertenece la asignatura"
+    )
+    numero = models.CharField(max_length=10, help_text="Número de la asignatura, ej: '182', '120'")
+    nombre = models.CharField(max_length=200, help_text="Nombre de la asignatura")
+    descripcion = models.TextField(blank=True, null=True, help_text="Descripción de la asignatura")
+    
+    def __str__(self):
+        return f"{self.departamento.codigo}-{self.numero} - {self.nombre}"
+    
+    @property
+    def codigo_completo(self):
+        return f"{self.departamento.codigo}-{self.numero}"
+    
+    class Meta:
+        verbose_name = "Asignatura"
+        verbose_name_plural = "Asignaturas"
+        unique_together = ['departamento', 'numero']
+        ordering = ['departamento__codigo', 'numero']
+
+
+class Pregunta(models.Model):
+    asignatura = models.ForeignKey(
+        Asignatura,
+        on_delete=models.CASCADE,
+        related_name='preguntas',
+        help_text="Asignatura a la que pertenece la pregunta"
+    )
+    titulo = models.CharField(max_length=300, help_text="Título de la pregunta")
+    contenido = models.TextField(help_text="Contenido detallado de la pregunta")
+    
+    # Usuario que hizo la pregunta (puede ser nulo para preguntas anónimas)
+    autor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='preguntas_realizadas',
+        help_text="Usuario que realizó la pregunta (opcional para preguntas anónimas)"
+    )
+    
+    # Nombre para mostrar (para usuarios anónimos o si el usuario quiere usar un alias)
+    nombre_autor = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Nombre a mostrar del autor (si es anónimo o alias)"
+    )
+    
+    es_anonima = models.BooleanField(default=False, help_text="Si la pregunta es anónima")
+    
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+    
+    # Para marcar si la pregunta está resuelta
+    esta_resuelta = models.BooleanField(default=False, help_text="Indica si la pregunta ya tiene respuesta satisfactoria")
+    
+    def __str__(self):
+        autor_display = "Anónimo" if self.es_anonima else (self.nombre_autor or (self.autor.username if self.autor else "Sin autor"))
+        return f"{self.asignatura.codigo_completo} - {self.titulo} ({autor_display})"
+    
+    class Meta:
+        verbose_name = "Pregunta"
+        verbose_name_plural = "Preguntas"
+        ordering = ['-fecha_creacion']
+
+
+class Respuesta(models.Model):
+    pregunta = models.ForeignKey(
+        Pregunta,
+        on_delete=models.CASCADE,
+        related_name='respuestas',
+        help_text="Pregunta a la que responde"
+    )
+    contenido = models.TextField(help_text="Contenido de la respuesta")
+    
+    # Usuario que respondió (puede ser nulo para respuestas anónimas)
+    autor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='respuestas_realizadas',
+        help_text="Usuario que realizó la respuesta (opcional para respuestas anónimas)"
+    )
+    
+    # Nombre para mostrar (para usuarios anónimos o si el usuario quiere usar un alias)
+    nombre_autor = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Nombre a mostrar del autor (si es anónimo o alias)"
+    )
+    
+    es_anonima = models.BooleanField(default=False, help_text="Si la respuesta es anónima")
+    
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+    
+    # Para que el autor de la pregunta pueda marcar respuestas como útiles
+    es_respuesta_aceptada = models.BooleanField(default=False, help_text="Si es la respuesta aceptada por el autor de la pregunta")
+    
+    def __str__(self):
+        autor_display = "Anónimo" if self.es_anonima else (self.nombre_autor or (self.autor.username if self.autor else "Sin autor"))
+        return f"Respuesta a '{self.pregunta.titulo}' por {autor_display}"
+    
+    class Meta:
+        verbose_name = "Respuesta"
+        verbose_name_plural = "Respuestas"
+        ordering = ['-es_respuesta_aceptada', '-fecha_creacion']  # Respuestas aceptadas primero, luego por fecha
