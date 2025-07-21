@@ -12,11 +12,12 @@ function createWindow() {
   });
 
   win.loadFile(path.join(__dirname, 'index.html'));
-  win.webContents.on('will-navigate', (event, url) => {
-    if (url.startsWith('http:') || url.startsWith('https://')) {
-      event.preventDefault();
+  
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('http:') || url.startsWith('https')) {
       shell.openExternal(url);
     }
+    return { action: 'deny' };
   });
 }
 

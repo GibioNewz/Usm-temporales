@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdn.jsdelivr.net; connect-src http://192.168.1.81:8000; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdn.jsdelivr.net; connect-src http://192.168.1.82:8000; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;">
   <title>Panel del Clima</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
   <link rel="stylesheet" href="style.css">
@@ -16,9 +16,9 @@
       <nav id="main-nav">
         <a href="#" class="nav-link active" data-view="clima">Clima</a>
         <a href="#" class="nav-link" data-view="extras">Extras</a>
-        <a href="#" class="nav-link" data-view="horario">Horario de Clases</a>
-        <a href="listados.html" class="nav-link">Eventos</a>
-        <a href="eventos.html" class="nav-link">Usuario</a>
+        <a href="#" class="nav-link" data-view="horario">Horario</a>
+        <a href="#" class="nav-link" data-view="listados">Eventos</a>
+        <a href="#" class="nav-link" data-view="gestion">Gestión</a>
       </nav>
       <div class="theme-switch-wrapper">
           <label class="theme-switch" for="theme-slider">
@@ -105,6 +105,85 @@
                   <tr data-block="15-16"><td>15-16</td><td>18:30-19:40</td><td class="rain-risk">--%</td></tr>
               </tbody>
           </table>
+        </div>
+      </section>
+      
+      <section id="view-listados" class="view">
+        <div class="gestion-grid">
+          <div class="card">
+            <div class="card-header">
+              <h2>Eventos Publicados</h2>
+              <button id="ev-reload" class="btn btn-secondary">
+                <span class="material-symbols-outlined">refresh</span> Recargar
+              </button>
+            </div>
+            <div class="card-body">
+              <ul id="ev-list" class="item-list"><li class="empty">Cargando eventos...</li></ul>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h2>Puntos de Monitoreo</h2>
+              <button id="pm-reload" class="btn btn-secondary">
+                <span class="material-symbols-outlined">refresh</span> Recargar
+              </button>
+            </div>
+            <div class="card-body">
+              <ul id="pm-list" class="item-list"><li class="empty">Cargando puntos...</li></ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-gestion" class="view">
+        <div class="gestion-grid">
+            <div class="card">
+              <div class="card-header">
+                <h2><span id="auth-badge" class="badge">Offline</span> Autenticación (JWT)</h2>
+              </div>
+              <div class="card-body">
+                <form id="form-login" class="form-container">
+                    <label>Usuario / Email<input id="l-user" required></label>
+                    <label>Contraseña<input id="l-pass" type="password" required></label>
+                    <div class="button-group">
+                        <button id="btn-login" type="submit" class="btn btn-primary">Login</button>
+                        <button type="button" id="btn-logout" class="btn btn-secondary">Logout</button>
+                    </div>
+                </form>
+                <pre id="auth-out" class="output-box" style="display:none;"></pre>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <h2>Crear Nuevo Evento</h2>
+              </div>
+              <div class="card-body">
+                <form id="ev-create" class="form-container">
+                    <label>Título<input id="ev-title" required></label>
+                    <label>Descripción<textarea id="ev-desc" rows="3"></textarea></label>
+                    <label>Fecha y Hora<input id="ev-date" type="datetime-local" required></label>
+                    <button type="submit" class="btn btn-primary full-width">Crear Evento</button>
+                </form>
+                <pre id="ev-create-out" class="output-box" style="display:none;"></pre>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <h2>Crear Nuevo Punto</h2>
+              </div>
+              <div class="card-body">
+                <form id="pm-create" class="form-container">
+                     <label>Nombre<input id="pm-name" required></label>
+                     <label>Descripción<textarea id="pm-desc" rows="3"></textarea></label>
+                     <div class="form-row">
+                         <label>Latitud<input id="pm-lat" required></label>
+                         <label>Longitud<input id="pm-lon" required></label>
+                     </div>
+                     <button type="submit" class="btn btn-primary full-width">Crear Punto</button>
+                </form>
+                <pre id="pm-create-out" class="output-box" style="display:none;"></pre>
+              </div>
+            </div>
         </div>
       </section>
     </main>
