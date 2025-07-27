@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Mapa de la USM</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      margin: 1rem 0;
+    }
+
+    #svg1 {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-width: 100vw;
+    }
+
+    #svg1 path {
+      cursor: pointer;
+      transition: fill .2s;
+    }
+    #svg1 path:hover {
+      opacity: .8;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Mapa USM</h1>
+
+  <svg
+     id="svg1"
+     viewBox="0 0 209.01411 227.84088"
+     preserveAspectRatio="xMidYMid meet"
+     xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     xml:space="preserve">
+    <!-- layer1: imagen de fondo -->
+    <g id="layer1" transform="translate(-0.76842855,-19.595186)">
+      <image
+        id="image1"
+        xlink:href="mapausm.jpg"
+        x="-11.637242"
+        y="18.271742"
+        width="270.93332"
+        height="244.47501"
+        preserveAspectRatio="none"
+        style="opacity:0.575658" />
+    </g>
+    <!-- layer2: polígonos -->
+    <g id="layer2" transform="translate(-0.76842855,-19.595186)">
+      <path id="edificioK"    d="m 136.65626,179.44641 -78.923867,17.93121 6.792351,30.0209 70.365726,1.76579 17.52348,-2.03761 24.85895,-8.82943 -2.58072,-14.12782 -30.83636,6.65644 z" style="opacity:0.575658;stroke-width:0.264999"/>
+      <path id="edificioL"    d="m 58.14012,176.45796 -4.48293,1.29036 4.415234,18.81384 4.890141,-1.22215 z" style="opacity:0.575658;stroke-width:0.264999"/>
+      <path id="edificioC"    d="m 125.78922,147.52381 -12.90515,3.12436 5.02605,20.91965 3.53208,-0.81545 -1.63039,-6.11281 2.30942,-0.67903 2.58124,11.54659 7.06365,-1.7663 z" style="opacity:0.575658;stroke-width:0.264999"/>
+      <path id="Fcasino"      d="m 105.41269,109.3525 -51.075955,11.13885 5.705078,26.62473 27.032459,-5.84098 -0.679029,-4.07521 18.066597,-4.61884 -0.95085,-5.29786 5.84151,-1.62988 z" style="opacity:0.575658;stroke-width:0.264999"/>
+      <path id="testamento"   d="m 146.00711,128.67535 -4.78421,-22.02915 -23.44869,4.87929 4.89065,22.14232 z" style="opacity:0.575658;stroke-width:0.264999"/>
+      <path id="Fbiblioteca"  d="m 159.74942,97.398189 -19.56108,4.482931 1.03456,4.76508 0.0522,-0.0108 4.89014,22.00641 -0.15813,0.0336 0.0222,0.10232 10.18801,-2.17351 -2.3089,-10.0521 9.64437,-2.17351 z" style="opacity:0.575658;stroke-width:0.264999"/>
+      <path id="edificioE"    d="m 19.696989,83.270886 -11.8184001,2.580721 7.1995601,33.145263 -0.950846,6.79235 11.954309,1.22267 0.40721,-3.668 2.173511,-0.40772 z" style="opacity:0.575658;stroke-width:0.264999"/>
+      <path id="edificioB"    d="M 90.470447,55.830701 25.809794,69.550793 36.269621,118.86096 101.20157,105.27729 Z" style="opacity:0.575658;stroke-width:0.264999"/>
+      <path id="ciac"         d="m 147.3879,40.073006 -26.62473,5.841504 -1.08675,-0.543636 -2.30942,0.543636 0.67902,2.988448 -13.85548,2.580721 -0.27182,1.630392 -10.731643,2.17351 1.618506,7.820195 3.314009,-0.624251 0.144178,0.67231 26.71051,-5.694743 0.1354,-0.679545 23.50089,-4.347021 -0.81494,-4.482414 1.35806,-0.135909 z" style="opacity:0.575658;stroke-width:0.264999"/>
+      <path id="patio"        d="m 2.515092,19.595186 c -0.9675291,0 -1.74666345,0.778618 -1.74666345,1.746147 V 245.6894 c 0,0.96753 0.77913435,1.74666 1.74666345,1.74666 H 208.0364 c 0.96753,0 1.74614,-0.77913 1.74614,-1.74666 V 21.341333 c 0,-0.967529 -0.77861,-1.746147 -1.74614,-1.746147 z m 144.872808,20.47782 1.76579,7.743197 -1.35806,0.135909 0.81494,4.482414 -23.50089,4.347021 -0.1354,0.679545 -26.71051,5.694743 -0.144178,-0.67231 -3.314009,0.624251 -1.618506,-7.820195 10.731643,-2.17351 0.27182,-1.630392 13.85548,-2.580721 -0.67902,-2.988448 2.30942,-0.543636 1.08675,0.543636 z M 90.470447,55.830701 101.20157,105.27729 36.269621,118.86096 25.809794,69.550793 Z m -70.773458,27.440185 8.965344,39.665284 -2.173511,0.40772 -0.40721,3.668 -11.954309,-1.22267 0.950846,-6.79235 -7.1995601,-33.145263 z m 140.052431,14.127303 3.80339,16.980361 -9.64437,2.17351 2.3089,10.0521 -10.18801,2.17351 -0.0222,-0.10232 -23.34225,4.99246 -4.89065,-22.14232 23.44869,-4.87929 -1.03456,-4.76508 z m -54.33673,11.954311 3.93981,16.30081 -5.84151,1.62988 0.95085,5.29786 -18.066597,4.61884 0.679029,4.07521 -27.032459,5.84098 -5.705078,-26.62473 z m 59.09096,12.49743 17.11627,76.34262 -37.35637,7.87859 -15.48588,-70.63755 7.87859,-1.90169 14.53503,65.74741 6.79235,-1.49448 -14.39912,-65.74689 15.62178,-3.668 -0.95136,-5.29787 z m -38.71443,25.67388 5.9769,26.21701 -7.06365,1.7663 -2.58124,-11.54659 -2.30942,0.67903 1.63039,6.11281 -3.53208,0.81545 -5.02605,-20.91965 z m -67.6491,28.93415 4.822445,18.88205 -4.890141,1.22215 -4.415234,-18.81384 z m 78.51614,2.98845 7.19956,31.37948 30.83636,-6.65644 2.58072,14.12782 -24.85895,8.82943 -17.52348,2.03761 -70.365726,-1.76579 -6.792351,-30.0209 z" style="opacity:0.575658;stroke-width:0.264999"/>
+      <path id="edificioA" d="m 158.32308,123.14017 6.11286,-1.25653 17.14997,76.27492 -37.32241,7.84483 -15.45195,-70.50165 7.77692,-1.90178 14.60294,65.78117 6.82603,-1.56218 -14.36522,-65.74721 15.58779,-3.70167 z" style="opacity:0.575658;fill:#000000;stroke-width:0.264999"/>
+    </g>
+  </svg>
+
+  <script>
+    //datos de temperatura manuales para demostrar colores, estas temperaturas deberían ser las que recibimos del punto de monitoreo
+    const datos = {
+      edificioA:   { nombre: "Edificio A",   temp: 22.0 },
+      patio:       { nombre: "Patio Central",temp: 25.3 },
+      ciac:        { nombre: "CIAC",         temp: 18.7 },
+      edificioB:   { nombre: "Edificio B",   temp: 30.1 },
+      edificioE:   { nombre: "Edificio E",   temp: 20.5 },
+      Fbiblioteca: { nombre: "Biblioteca",   temp: 28.2 },
+      testamento:  { nombre: "Testamento",   temp: 24.0 },
+      Fcasino:     { nombre: "Casino",       temp: 26.4 },
+      edificioC:   { nombre: "Edificio C",   temp: 21.8 },
+      edificioL:   { nombre: "Edificio L",   temp: 19.6 },
+      edificioK:   { nombre: "Edificio K",   temp: 23.5 }
+    };
+
+    function colorSegunTemp(t) {
+    if      (t >= 30) return '#D73027';  //rojo
+    else if (t >= 25) return '#FC8D59';  //naranja
+    else if (t >= 20) return '#FFFFBF';  //amarillo
+    else if (t >= 15) return '#91BFDB';  //azul
+    else               return '#4575B4';  //azul hielo
+    }
+
+
+    Object.keys(datos).forEach(id => {
+      const zona = document.getElementById(id);
+      if (!zona) return console.warn(`No existe <path id="${id}">`);
+      const info = datos[id];
+      zona.style.fill = colorSegunTemp(info.temp);
+      zona.addEventListener('click', () => {
+        alert(`${info.nombre}\nTemperatura: ${info.temp.toFixed(1)} °C`);
+      });
+    });
+  </script>
+</body>
+</html>
