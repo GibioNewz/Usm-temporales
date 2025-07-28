@@ -34,7 +34,7 @@ quickstart/
 - `Respuesta`: Respuestas con sistema de aceptación
 
 ### Sistema de Monitoreo
-- `PuntoMonitoreo`: Puntos de monitoreo meteorológico con coordenadas GPS
+- `PuntoMonitoreo`: Ubicaciones por nombre (Biblioteca, Auditorio) con temperatura actual
 
 ### Sistema de Eventos
 - `Event`: Eventos de calendario con fechas y descripciones
@@ -89,6 +89,9 @@ quickstart/
 - `GET /puntos-monitoreo/{id}/` - Obtener punto específico
 - `PUT /puntos-monitoreo/{id}/` - Actualizar punto
 - `DELETE /puntos-monitoreo/{id}/` - Eliminar punto
+- `POST /puntos-monitoreo/reportar_temperatura/` - Reportar temperatura desde sensor
+- `GET /puntos-monitoreo/resumen_temperaturas/` - Resumen de todas las temperaturas
+- `POST /puntos-monitoreo/{id}/actualizar_temperatura/` - Actualizar temperatura por ID
 
 ### Eventos
 - `GET /events/` - Listar eventos
@@ -174,10 +177,24 @@ POST /respuestas/
 ```json
 POST /puntos-monitoreo/
 {
-    "nombre": "Campus San Joaquín",
-    "descripcion": "Punto central del campus",
-    "latitud": -33.4569,
-    "longitud": -70.6483
+    "nombre": "Biblioteca"
+}
+```
+
+### Reportar Temperatura desde Sensor
+```json
+POST /puntos-monitoreo/reportar_temperatura/
+{
+    "nombre_punto": "Biblioteca",
+    "temperatura": 20.5
+}
+```
+
+### Actualizar Temperatura por ID
+```json
+POST /puntos-monitoreo/1/actualizar_temperatura/
+{
+    "temperatura": 22.3
 }
 ```
 
