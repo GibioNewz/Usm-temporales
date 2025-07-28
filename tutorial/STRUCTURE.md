@@ -1,156 +1,143 @@
-# Django App Structure - Best Practices
+# Estructura de la Aplicación Django
 
-## Overview
+## Organización de Archivos
 
-Este proyecto ha sido reorganizado para seguir las mejores prácticas de Django en cuanto a la organización de código. Los archivos grandes como `views.py` y `urls.py` han sido divididos en módulos más pequeños y enfocados.
-
-## Nueva Estructura
-
-### Views (Vistas)
-
+### Vistas
 ```
 quickstart/
 ├── views/
 │   ├── __init__.py          # Importa todas las vistas
 │   ├── auth_views.py        # Vistas de autenticación
-│   ├── event_views.py       # Vistas de eventos
-│   ├── monitoring_views.py  # Vistas de monitoreo
-│   ├── qna_views.py        # Vistas del sistema Q&A
-│   └── weather_views.py     # Vistas del clima
-└── views.py                 # Archivo principal (importa todo)
+│   ├── event_views.py       # Vistas de gestión de eventos
+│   ├── monitoring_views.py  # Vistas de puntos de monitoreo
+│   ├── qna_views.py         # Vistas del sistema Q&A
+│   └── weather_views.py     # Vistas de API del clima
+└── views.py                 # Archivo principal (importa desde módulos)
 ```
 
 ### URLs
-
 ```
 quickstart/
 ├── urls/
 │   ├── __init__.py          # Configuración principal de URLs
 │   ├── auth_urls.py         # URLs de autenticación
 │   └── weather_urls.py      # URLs del clima
-└── urls.py                  # Archivo principal (importa todo)
+└── urls.py                  # Archivo principal (importa desde módulos)
 ```
 
-## Ventajas de esta Estructura
-
-### 1. **Mantenibilidad**
-- Cada archivo se enfoca en una funcionalidad específica
-- Es más fácil encontrar y modificar código relacionado
-- Reduce conflictos al trabajar en equipo
-
-### 2. **Escalabilidad**
-- Fácil agregar nuevas funcionalidades sin impactar archivos existentes
-- Permite organización por dominio/característica
-- Facilita la refactorización
-
-### 3. **Legibilidad**
-- Archivos más pequeños son más fáciles de leer
-- Nombres descriptivos hacen obvio el propósito de cada módulo
-- Separación clara de responsabilidades
-
-### 4. **Reutilización**
-- Funciones y clases están organizadas lógicamente
-- Fácil importar funcionalidad específica
-- Evita imports innecesarios
-
-## Funcionalidades Organizadas
+## Modelos
 
 ### Sistema Q&A
-- **Modelos**: `Departamento`, `Asignatura`, `Pregunta`, `Respuesta`
-- **Vistas**: `qna_views.py`
-- **Características**:
-  - Preguntas y respuestas anónimas o con usuario
-  - Filtrado por asignatura/departamento
-  - Sistema de respuestas aceptadas
-  - Estadísticas por asignatura
+- `Departamento`: Departamentos académicos (INF, FIS, MAT, etc.)
+- `Asignatura`: Materias con código de departamento + número (INF-182, FIS-120)
+- `Pregunta`: Preguntas con autores anónimos/autenticados
+- `Respuesta`: Respuestas con sistema de aceptación
 
-### Sistema de Autenticación
-- **Vistas**: `auth_views.py`
-- **URLs**: `auth_urls.py`
-- **Características**:
-  - Login/logout por sesión
-  - Verificación de estado de autenticación
-  - Soporte para múltiples métodos de auth
+### Sistema de Monitoreo
+- `PuntoMonitoreo`: Puntos de monitoreo meteorológico con coordenadas GPS
 
-### Sistema Meteorológico
-- **Vistas**: `weather_views.py`
-- **URLs**: `weather_urls.py`
-- **Características**:
-  - Datos actuales y pronósticos
-  - Endpoints específicos por tipo de dato
-  - Integración con API Open-Meteo
+### Sistema de Eventos
+- `Event`: Eventos de calendario con fechas y descripciones
 
-## Cómo Usar
+## Endpoints de la API
 
-### Importar Vistas Específicas
-```python
-from quickstart.views.qna_views import PreguntaViewSet
-from quickstart.views.auth_views import session_login
-```
-
-### Importar Todas las Vistas (Compatibilidad)
-```python
-from quickstart.views import *  # Funciona como antes
-```
-
-### Agregar Nueva Funcionalidad
-
-1. **Crear nuevo módulo de vistas**:
-```python
-# quickstart/views/nueva_funcionalidad_views.py
-class NuevaVistaViewSet(viewsets.ModelViewSet):
-    # Implementación...
-```
-
-2. **Agregar al __init__.py**:
-```python
-# quickstart/views/__init__.py
-from .nueva_funcionalidad_views import *
-```
-
-3. **Crear URLs específicas si es necesario**:
-```python
-# quickstart/urls/nueva_funcionalidad_urls.py
-urlpatterns = [
-    # URLs específicas...
-]
-```
-
-## APIs Disponibles
-
-### Endpoints Q&A
-
-#### Departamentos
+### Departamentos
 - `GET /departamentos/` - Listar departamentos
 - `POST /departamentos/` - Crear departamento
 - `GET /departamentos/{id}/` - Obtener departamento específico
+- `PUT /departamentos/{id}/` - Actualizar departamento
+- `DELETE /departamentos/{id}/` - Eliminar departamento
 
-#### Asignaturas
+### Asignaturas
 - `GET /asignaturas/` - Listar asignaturas
+- `POST /asignaturas/` - Crear asignatura
+- `GET /asignaturas/{id}/` - Obtener asignatura específica
+- `PUT /asignaturas/{id}/` - Actualizar asignatura
+- `DELETE /asignaturas/{id}/` - Eliminar asignatura
 - `GET /asignaturas/?departamento={id}` - Filtrar por departamento
 - `GET /asignaturas/?codigo_departamento={codigo}` - Filtrar por código
-- `GET /asignaturas/por_departamento/` - Asignaturas agrupadas por departamento
+- `GET /asignaturas/por_departamento/` - Agrupar por departamento
 
-#### Preguntas
-- `GET /preguntas/` - Listar preguntas (vista simplificada)
-- `GET /preguntas/{id}/` - Obtener pregunta con respuestas
+### Preguntas
+- `GET /preguntas/` - Listar preguntas
 - `POST /preguntas/` - Crear pregunta
-- `GET /preguntas/?asignatura={id}` - Filtrar por asignatura
-- `GET /preguntas/?codigo_asignatura=INF-182` - Filtrar por código de asignatura
-- `GET /preguntas/?resuelta=true` - Filtrar por estado
-- `GET /preguntas/?buscar={texto}` - Buscar en título/contenido
+- `GET /preguntas/{id}/` - Obtener pregunta con respuestas
+- `PUT /preguntas/{id}/` - Actualizar pregunta
+- `DELETE /preguntas/{id}/` - Eliminar pregunta
 - `POST /preguntas/{id}/marcar_resuelta/` - Marcar como resuelta
 - `GET /preguntas/por_asignatura/` - Estadísticas por asignatura
 
-#### Respuestas
+**Filtros:**
+- `?asignatura={id}` - Por asignatura
+- `?departamento={id}` - Por departamento
+- `?codigo_asignatura=INF-182` - Por código de asignatura
+- `?resuelta=true` - Por estado de resolución
+- `?buscar={texto}` - Buscar en título/contenido
+
+### Respuestas
 - `GET /respuestas/` - Listar respuestas
 - `POST /respuestas/` - Crear respuesta
-- `GET /respuestas/?pregunta={id}` - Filtrar por pregunta
+- `GET /respuestas/{id}/` - Obtener respuesta específica
+- `PUT /respuestas/{id}/` - Actualizar respuesta
+- `DELETE /respuestas/{id}/` - Eliminar respuesta
 - `POST /respuestas/{id}/marcar_aceptada/` - Marcar como aceptada
+- `GET /respuestas/?pregunta={id}` - Filtrar por pregunta
 
-### Ejemplos de Uso
+### Puntos de Monitoreo
+- `GET /puntos-monitoreo/` - Listar puntos de monitoreo
+- `POST /puntos-monitoreo/` - Crear punto de monitoreo
+- `GET /puntos-monitoreo/{id}/` - Obtener punto específico
+- `PUT /puntos-monitoreo/{id}/` - Actualizar punto
+- `DELETE /puntos-monitoreo/{id}/` - Eliminar punto
 
-#### Crear Pregunta Anónima
+### Eventos
+- `GET /events/` - Listar eventos
+- `POST /events/` - Crear evento
+- `GET /events/{id}/` - Obtener evento específico
+- `PUT /events/{id}/` - Actualizar evento
+- `DELETE /events/{id}/` - Eliminar evento
+
+### Clima
+- `GET /weather/` - Reporte meteorológico completo
+- `GET /weather/uv/` - Índice UV
+- `GET /weather/temperature/` - Datos de temperatura
+- `GET /weather/humidity/` - Datos de humedad
+- `GET /weather/precipitation/` - Datos de precipitación
+- `GET /weather/wind/` - Velocidad del viento
+- `GET /weather/visibility/` - Datos de visibilidad
+- `GET /weather/clouds/` - Cobertura de nubes
+- `GET /weather/summary/` - Resumen meteorológico
+
+### Autenticación
+- `POST /auth/session/login/` - Login por sesión
+- `POST /auth/session/logout/` - Logout por sesión
+- `GET /auth/session/user/` - Información del usuario actual
+- `GET /auth/status/` - Estado de autenticación
+
+## Ejemplos de Peticiones
+
+### Crear Departamento
+```json
+POST /departamentos/
+{
+    "codigo": "IND",
+    "nombre": "Departamento de Ingeniería Industrial",
+    "descripcion": "Departamento de Ingeniería Industrial y de Sistemas"
+}
+```
+
+### Crear Asignatura
+```json
+POST /asignaturas/
+{
+    "departamento": 1,
+    "numero": "101",
+    "nombre": "Introducción a la Ingeniería",
+    "descripcion": "Curso introductorio a la carrera"
+}
+```
+
+### Crear Pregunta Anónima
 ```json
 POST /preguntas/
 {
@@ -162,32 +149,78 @@ POST /preguntas/
 }
 ```
 
-#### Buscar Preguntas por Asignatura
-```
-GET /preguntas/?codigo_asignatura=INF-182
-```
-
-#### Crear Respuesta
+### Crear Pregunta Autenticada
 ```json
-POST /respuestas/
+POST /preguntas/
 {
-    "pregunta": 1,
-    "contenido": "Para implementar herencia en Java...",
+    "asignatura": 2,
+    "titulo": "Problema con algoritmo de ordenamiento",
+    "contenido": "Mi implementación de quicksort no funciona correctamente...",
     "es_anonima": false
 }
 ```
 
-## Configuración de Permisos
+### Crear Respuesta
+```json
+POST /respuestas/
+{
+    "pregunta": 1,
+    "contenido": "Para implementar herencia en Java usas la palabra clave 'extends'...",
+    "es_anonima": false
+}
+```
 
-- **Lectura**: Disponible para usuarios anónimos
-- **Escritura**: Requiere autenticación (excepto preguntas/respuestas anónimas)
-- **Marcar como resuelta**: Solo autor de la pregunta
-- **Aceptar respuesta**: Solo autor de la pregunta original
+### Crear Punto de Monitoreo
+```json
+POST /puntos-monitoreo/
+{
+    "nombre": "Campus San Joaquín",
+    "descripcion": "Punto central del campus",
+    "latitud": -33.4569,
+    "longitud": -70.6483
+}
+```
 
-## Notas de Desarrollo
+### Crear Evento
+```json
+POST /events/
+{
+    "title": "Seminario de Inteligencia Artificial",
+    "description": "Conferencia sobre últimas tendencias en IA",
+    "date": "2025-08-15T14:00:00Z"
+}
+```
 
-- Todas las fechas están en timezone de Santiago
-- Los códigos de asignatura siguen el formato `DEPARTAMENTO-NUMERO`
-- El sistema soporta preguntas y respuestas completamente anónimas
-- Las respuestas aceptadas aparecen primero en el orden
-- Se incluyen estadísticas automáticas de resolución por asignatura
+### Login de Sesión
+```json
+POST /auth/session/login/
+{
+    "username": "estudiante",
+    "password": "mi_password"
+}
+```
+
+## Permisos
+
+### Sistema Q&A
+- **Lectura**: Acceso anónimo permitido
+- **Escritura**: Autenticación requerida (excepto publicaciones anónimas)
+- **Marcar resuelta**: Solo autor de la pregunta
+- **Aceptar respuesta**: Solo autor de la pregunta
+
+### Puntos de Monitoreo
+- **Lectura**: Acceso anónimo permitido
+- **Escritura**: Autenticación requerida
+- **Modificación**: Solo creador del punto
+
+### Eventos
+- **Lectura**: Autenticación requerida
+- **Escritura**: Autenticación requerida
+- **Modificación**: Solo creador del evento
+
+### Datos Meteorológicos
+- **Lectura**: Acceso anónimo permitido
+
+### Autenticación
+- **Login/Logout**: Acceso anónimo
+- **Estado de usuario**: Depende del método de autenticación
