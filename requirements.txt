@@ -1,9 +1,6 @@
-torch
-torchvision
-torchaudio
-ultralytics
-timm
-opencv-python-headless
-numpy
-matplotlib
-transformers
+django
+rest_framework_simplejwt
+retry_requests
+rest_framework_simplejwt
+openmeteo_requests
+django-allauth

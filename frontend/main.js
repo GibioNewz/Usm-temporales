@@ -1,16 +1,24 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, shell } = require('electron');
 const path = require('path');
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1200,
+    height: 800,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
     }
   });
+
   win.loadFile(path.join(__dirname, 'index.html'));
+  
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('http:') || url.startsWith('https')) {
+      shell.openExternal(url);
+    }
+    return { action: 'deny' };
+  });
 }
 
 app.whenReady().then(createWindow);
