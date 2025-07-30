@@ -1,8 +1,8 @@
-const WEATHER_ROOT = 'http://192.168.1.82:8000/api/';
+const WEATHER_ROOT = 'http://127.0.0.1:8000/api/';
 async function g(p) { const r = await fetch(WEATHER_ROOT + p); return r.json(); }
 
 window.API = {
-    BASE_URL: 'http://192.168.1.82:8000/api',
+    BASE_URL: 'http://127.0.0.1:8000/api',
     token: localStorage.getItem('jwt') || null,
 
     async _fetch(endpoint, opts = {}) {
