@@ -5,9 +5,14 @@ from .models import PuntoMonitoreo, Event, Departamento, Asignatura, Pregunta, R
 
 @admin.register(PuntoMonitoreo)
 class PuntoMonitoreoAdmin(admin.ModelAdmin):
-    list_display = ['nombre', 'latitud', 'longitud', 'creado_por', 'fecha_creacion']
-    list_filter = ['fecha_creacion', 'creado_por']
-    search_fields = ['nombre', 'descripcion']
+    list_display = ['nombre', 'temperatura_texto', 'fecha_ultima_temperatura', 'creado_por', 'fecha_creacion']
+    list_filter = ['fecha_creacion', 'creado_por', 'fecha_ultima_temperatura']
+    search_fields = ['nombre']
+    readonly_fields = ['fecha_creacion', 'ultima_actualizacion', 'fecha_ultima_temperatura']
+    
+    def temperatura_texto(self, obj):
+        return obj.temperatura_texto
+    temperatura_texto.short_description = 'Temperatura Actual'
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
