@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-k&@d9_^98_mmm5e7$h$&mw^=%p1&kt_42^@eqm(xk)!#p%9_+%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.1.82','127.0.0.1']
+ALLOWED_HOSTS = ['192.168.1.83','127.0.0.1']
 
 
 # Application definition
@@ -217,11 +217,11 @@ SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SECURE = False  # True en producción con HTTPS
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = 'Lax'
-CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'http://localhost:8000',"http://192.168.1.82:8001" ,"http://192.168.1.82:8000","http://127.0.0.1:8001"]
+CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'http://localhost:8000',"http://192.168.1.83:8001" ,"http://192.168.1.83:8000","http://127.0.0.1:8001"]
 CORS_ALLOWED_ORIGINS = [
-    "http://192.168.1.82:8001",
+    "http://192.168.1.83:8001",
     "http://localhost:8001",
-    "http://192.168.1.82:8000",
+    "http://192.168.1.83:8000",
     "http://127.0.0.1:8000",
     "http://127.0.0.1:8001",
 ]

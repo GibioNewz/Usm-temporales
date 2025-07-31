@@ -31,19 +31,61 @@ window.addEventListener('DOMContentLoaded', () => {
 
 function initNavigation() {
   const navLinks = document.querySelectorAll('.nav-link');
+  const sidebarNavLinks = document.querySelectorAll('.sidebar-nav-link');
   const views = document.querySelectorAll('.view');
+  const sidebarNav = document.getElementById('sidebar-nav');
+  const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
+  const overlay = document.getElementById('overlay');
+
+  const switchView = (targetViewId, activeLink) => {
+    views.forEach(view => view.classList.remove('active'));
+    document.getElementById(targetViewId).classList.add('active');
+
+    navLinks.forEach(nav => nav.classList.remove('active'));
+    sidebarNavLinks.forEach(nav => nav.classList.remove('active'));
+
+    if (activeLink) {
+        activeLink.classList.add('active');
+    }
+
+    sidebarNav.classList.remove('active');
+    overlay.classList.remove('active');
+  };
+
   navLinks.forEach(link => {
     if (link.dataset.view) {
       link.addEventListener('click', (event) => {
         event.preventDefault();
         const targetViewId = 'view-' + link.dataset.view;
-        views.forEach(view => view.classList.remove('active'));
-        navLinks.forEach(nav => nav.classList.remove('active'));
-        document.getElementById(targetViewId).classList.add('active');
-        link.classList.add('active');
+        switchView(targetViewId, link);
       });
     }
   });
+
+  sidebarNavLinks.forEach(link => {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      const targetViewId = 'view-' + link.dataset.view;
+      switchView(targetViewId, link);
+    });
+  });
+
+  sidebarToggleBtn.addEventListener('click', () => {
+    sidebarNav.classList.toggle('active');
+    overlay.classList.toggle('active');
+  });
+
+  overlay.addEventListener('click', () => {
+    sidebarNav.classList.remove('active');
+    overlay.classList.remove('active');
+  });
+
+  const initialViewId = 'view-listados';
+  document.getElementById(initialViewId).classList.add('active');
+  const initialNavLink = document.querySelector(`.nav-link[data-view="listados"]`);
+  if (initialNavLink) {
+      initialNavLink.classList.add('active');
+  }
 }
 
 function renderWeatherView() {
@@ -144,7 +186,8 @@ function renderListadosView() {
     const renderEventList = (events) => {
         const ul = $('#ev-list');
         if (!events || events.length === 0) { ul.innerHTML = '<li class="empty">— No hay eventos para mostrar —</li>'; return; }
-        ul.innerHTML = events.map(ev => `<li><strong>${ev.title}</strong><p>${ev.description || '<em>Sin descripción</em>'}</p><small>Fecha: ${new Date(ev.date).toLocaleString()} &middot; Creado por: ${ev.created_by_username || '—'}</small></li>`).join('');
+        const sortedEvents = [...events].sort((a, b) => new Date(a.date) - new Date(b.date));
+        ul.innerHTML = sortedEvents.map(ev => `<li><strong>${ev.title}</strong><p>${ev.description || '<em>Sin descripción</em>'}</p><small>Fecha: ${new Date(ev.date).toLocaleString()} &middot; Creado por: ${ev.created_by_username || '—'}</small></li>`).join('');
     };
 
     const renderPointsList = (points) => {
@@ -225,7 +268,7 @@ function renderGestionView() {
 
     $('#pm-create').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const body = { nombre: $('#pm-name').value, descripcion: $('#pm-desc').value, latitud: $('#pm-lat').value, longitud: $('#pm-lon').value, };
+        const body = { nombre: $('#pm-name').value, descripcion: $('#pm-desc').value, latitud: $('#pm-lat').value, longitud: $('#pm-lon').value }; // CORRECCIÓN AQUÍ
         try {
             const data = await API.createMonitoringPoint(body);
             showOut($('#pm-create-out'), `✓ ${data.message || 'Punto creado con éxito.'}`, true);
