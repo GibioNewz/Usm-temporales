@@ -1,4 +1,29 @@
 let weatherChart = null;
+const switchView = (targetViewId, activeLink) => {
+    const views = document.querySelectorAll('.view');
+    const navLinks = document.querySelectorAll('.nav-link');
+    const sidebarNavLinks = document.querySelectorAll('.sidebar-nav-link');
+    const sidebarNav = document.getElementById('sidebar-nav');
+    const overlay = document.getElementById('overlay');
+
+    views.forEach(view => view.classList.remove('active'));
+    document.getElementById(targetViewId).classList.add('active');
+
+    navLinks.forEach(nav => nav.classList.remove('active'));
+    sidebarNavLinks.forEach(nav => nav.classList.remove('active'));
+
+    if (activeLink) {
+        activeLink.classList.add('active');
+    }
+    const correspondingSidebarLink = document.querySelector(`.sidebar-nav-link[data-view="${activeLink?.dataset.view}"]`);
+    if(correspondingSidebarLink) {
+        correspondingSidebarLink.classList.add('active');
+    }
+
+    sidebarNav.classList.remove('active');
+    overlay.classList.remove('active');
+};
+
 
 window.addEventListener('DOMContentLoaded', () => {
   const themeSlider = document.getElementById('theme-slider');
@@ -27,31 +52,18 @@ window.addEventListener('DOMContentLoaded', () => {
     renderListadosView();
     renderGestionView();
     renderForumView();
+    if (document.getElementById('view-create-question')) {
+        initCreateQuestionView();
+    }
   });
 });
 
 function initNavigation() {
   const navLinks = document.querySelectorAll('.nav-link');
   const sidebarNavLinks = document.querySelectorAll('.sidebar-nav-link');
-  const views = document.querySelectorAll('.view');
   const sidebarNav = document.getElementById('sidebar-nav');
   const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
   const overlay = document.getElementById('overlay');
-
-  const switchView = (targetViewId, activeLink) => {
-    views.forEach(view => view.classList.remove('active'));
-    document.getElementById(targetViewId).classList.add('active');
-
-    navLinks.forEach(nav => nav.classList.remove('active'));
-    sidebarNavLinks.forEach(nav => nav.classList.remove('active'));
-
-    if (activeLink) {
-        activeLink.classList.add('active');
-    }
-
-    sidebarNav.classList.remove('active');
-    overlay.classList.remove('active');
-  };
 
   navLinks.forEach(link => {
     if (link.dataset.view) {
@@ -269,7 +281,7 @@ function renderGestionView() {
 
     $('#pm-create').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const body = { nombre: $('#pm-name').value, descripcion: $('#pm-desc').value, latitud: $('#pm-lat').value, longitud: $('#pm-lon').value }; // CORRECCIÓN AQUÍ
+        const body = { nombre: $('#pm-name').value, descripcion: $('#pm-desc').value, latitud: $('#pm-lat').value, longitud: $('#pm-lon').value };
         try {
             const data = await API.createMonitoringPoint(body);
             showOut($('#pm-create-out'), `✓ ${data.message || 'Punto creado con éxito.'}`, true);
@@ -469,7 +481,10 @@ function renderForumView() {
       }
     }
   });
-
+  $('#btn-create-question').addEventListener('click', (e) => {
+    e.preventDefault();
+    switchView('view-create-question', null);
+  });
   loadAllData().then(success => {
     if (success) {
       loadDepartments();
@@ -484,4 +499,192 @@ function renderForumView() {
       timeout = setTimeout(() => func.apply(this, args), wait);
     };
   }
+}
+function initCreateQuestionView() {
+    const $ = sel => document.querySelector(sel);
+    const deptSelect = $('#create-dept-select');
+    const subjectSelect = $('#create-subject-select');
+    const anonymousCheckbox = $('#question-anonymous');
+    const authorNameGroup = $('#author-name-group');
+    const questionAuthorInput = $('#question-author');
+    const questionTitleInput = $('#question-title');
+    const questionContentInput = $('#question-content');
+    const showDeptFormBtn = $('#btn-show-dept-form');
+    const createDeptBtn = $('#btn-create-dept');
+    const showSubjectFormBtn = $('#btn-show-subject-form');
+    const createSubjectBtn = $('#btn-create-subject');
+    const nextStep1Btn = $('#btn-next-step1');
+    const prevStep2Btn = $('#btn-prev-step2');
+    const nextStep2Btn = $('#btn-next-step2');
+    const prevStep3Btn = $('#btn-prev-step3');
+    const submitQuestionBtn = $('#btn-submit-question');
+    let selectedDeptId = null;
+    let selectedSubjectId = null;
+    async function loadDepartments() {
+        try {
+            const response = await API._fetch('/departamentos/');
+            const depts = Array.isArray(response) ? response : response.results || [];
+            deptSelect.innerHTML = '<option value="">Selecciona un departamento</option>';
+            depts.forEach(dept => {
+                const option = document.createElement('option');
+                option.value = dept.id;
+                option.textContent = dept.nombre;
+                deptSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error al cargar departamentos:', error);
+            deptSelect.innerHTML = '<option value="">Error al cargar</option>';
+        }
+    }
+    async function loadSubjects(deptId) {
+        subjectSelect.disabled = !deptId;
+        if (!deptId) {
+            subjectSelect.innerHTML = '<option value="">Primero selecciona un departamento</option>';
+            return;
+        }
+        
+        try {
+            const response = await API._fetch(`/asignaturas/?departamento=${deptId}`);
+            const subjects = Array.isArray(response) ? response : response.results || [];
+            subjectSelect.innerHTML = '<option value="">Selecciona una asignatura</option>';
+            subjects.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject.id;
+                option.textContent = subject.nombre;
+                subjectSelect.appendChild(option);
+            });
+            subjectSelect.disabled = false;
+        } catch (error) {
+            console.error('Error al cargar asignaturas:', error);
+            subjectSelect.innerHTML = '<option value="">Error al cargar</option>';
+        }
+    }
+    showDeptFormBtn.addEventListener('click', () => {
+        $('#create-dept-form').style.display = 'block';
+    });
+    
+    showSubjectFormBtn.addEventListener('click', () => {
+        $('#create-subject-form').style.display = 'block';
+    });
+    createDeptBtn.addEventListener('click', async () => {
+        const name = $('#new-dept-name').value;
+        if (!name) return;
+        
+        try {
+            const newDept = await API._fetch('/departamentos/', {
+                method: 'POST',
+                body: JSON.stringify({ nombre: name })
+            });
+            const option = document.createElement('option');
+            option.value = newDept.id;
+            option.textContent = newDept.nombre;
+            deptSelect.appendChild(option);
+            deptSelect.value = newDept.id;
+            selectedDeptId = newDept.id;
+            $('#create-dept-form').style.display = 'none';
+            $('#new-dept-name').value = '';
+            nextStep1Btn.disabled = false;
+        } catch (error) {
+            console.error('Error al crear departamento:', error);
+            alert('Error al crear departamento: ' + (error.message || JSON.stringify(error)));
+        }
+    });
+    createSubjectBtn.addEventListener('click', async () => {
+        const name = $('#new-subject-name').value;
+        const code = $('#new-subject-code').value;
+        if (!name || !code || !selectedDeptId) return;
+        
+        try {
+            const newSubject = await API._fetch('/asignaturas/', {
+                method: 'POST',
+                body: JSON.stringify({ 
+                    nombre: name,
+                    codigo: code,
+                    departamento: selectedDeptId 
+                })
+            });
+            const option = document.createElement('option');
+            option.value = newSubject.id;
+            option.textContent = newSubject.nombre;
+            subjectSelect.appendChild(option);
+            subjectSelect.value = newSubject.id;
+            selectedSubjectId = newSubject.id;
+            $('#create-subject-form').style.display = 'none';
+            $('#new-subject-name').value = '';
+            $('#new-subject-code').value = '';
+            nextStep2Btn.disabled = false;
+        } catch (error) {
+            console.error('Error al crear asignatura:', error);
+            alert('Error al crear asignatura: ' + (error.message || JSON.stringify(error)));
+        }
+    });
+    deptSelect.addEventListener('change', () => {
+        selectedDeptId = deptSelect.value;
+        nextStep1Btn.disabled = !selectedDeptId;
+        if (selectedDeptId) loadSubjects(selectedDeptId);
+    });
+    
+    subjectSelect.addEventListener('change', () => {
+        selectedSubjectId = subjectSelect.value;
+        nextStep2Btn.disabled = !selectedSubjectId;
+    });
+    
+    nextStep1Btn.addEventListener('click', () => {
+        $('#step-department').classList.remove('active');
+        $('#step-subject').classList.add('active');
+    });
+    
+    prevStep2Btn.addEventListener('click', () => {
+        $('#step-subject').classList.remove('active');
+        $('#step-department').classList.add('active');
+    });
+    
+    nextStep2Btn.addEventListener('click', () => {
+        $('#step-subject').classList.remove('active');
+        $('#step-question').classList.add('active');
+    });
+    
+    prevStep3Btn.addEventListener('click', () => {
+        $('#step-question').classList.remove('active');
+        $('#step-subject').classList.add('active');
+    });
+    anonymousCheckbox.addEventListener('change', () => {
+        authorNameGroup.style.display = anonymousCheckbox.checked ? 'none' : 'block';
+        if (anonymousCheckbox.checked) {
+            questionAuthorInput.removeAttribute('required');
+        } else {
+            questionAuthorInput.setAttribute('required', 'required');
+        }
+    });
+    submitQuestionBtn.addEventListener('click', async () => {
+        const title = questionTitleInput.value;
+        const content = questionContentInput.value;
+        const author = anonymousCheckbox.checked ? null : questionAuthorInput.value;
+        
+        if (!title || !content || (!anonymousCheckbox.checked && !author)) {
+            alert('Por favor, completa todos los campos requeridos.');
+            return;
+        }
+        
+        try {
+            const body = {
+                titulo: title,
+                contenido: content,
+                asignatura: selectedSubjectId,
+                autor: author
+            };
+            
+            await API._fetch('/preguntas/', {
+                method: 'POST',
+                body: JSON.stringify(body)
+            });
+            
+            alert('Pregunta publicada con éxito!');
+            switchView('view-forum', null);
+        } catch (error) {
+            console.error('Error al publicar pregunta:', error);
+            alert('Error: ' + (error.message || JSON.stringify(error)));
+        }
+    });
+    loadDepartments();
 }
