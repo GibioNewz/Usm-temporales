@@ -292,13 +292,43 @@ function renderForumView() {
   const searchInput = $('#forum-search');
   const contentContainer = $('#forum-content');
   
+
+  const asignaturasMap = {};
+  const departamentosMap = {};
+
+  async function loadAllData() {
+    try {
+      const deptResponse = await API._fetch('/departamentos/');
+      const departamentos = Array.isArray(deptResponse) ? deptResponse : deptResponse.results || [];
+
+      departamentos.forEach(dept => {
+        departamentosMap[dept.id] = dept;
+      });
+
+      const subjResponse = await API._fetch('/asignaturas/');
+      const asignaturas = Array.isArray(subjResponse) ? subjResponse : subjResponse.results || [];
+
+      asignaturas.forEach(asig => {
+        if (asig.departamento && departamentosMap[asig.departamento]) {
+          asig.departamento_obj = departamentosMap[asig.departamento];
+        }
+        asignaturasMap[asig.id] = asig;
+      });
+      
+      return true;
+    } catch (err) {
+      console.error('Error cargando datos iniciales:', err);
+      return false;
+    }
+  }
+  
   async function loadDepartments() {
     try {
-      const response = await API._fetch('/departamentos/');
-      const data = response.results || response;
       departmentSelect.innerHTML = `
         <option value="">Todos los departamentos</option>
-        ${data.map(d => `<option value="${d.id}">${d.nombre}</option>`).join('')}
+        ${Object.values(departamentosMap).map(d => `
+          <option value="${d.id}">${d.nombre}</option>
+        `).join('')}
       `;
     } catch (err) {
       console.error('Error cargando departamentos:', err);
@@ -311,15 +341,15 @@ function renderForumView() {
     subjectSelect.innerHTML = '<option value="">Cargando asignaturas...</option>';
     
     try {
-      const endpoint = departmentId 
-        ? `/asignaturas/?departamento=${departmentId}`
-        : '/asignaturas/';
+      const asignaturas = departmentId 
+        ? Object.values(asignaturasMap).filter(a => a.departamento == departmentId)
+        : Object.values(asignaturasMap);
       
-      const response = await API._fetch(endpoint);
-      const data = response.results || response;
       subjectSelect.innerHTML = `
         <option value="">Todas las asignaturas</option>
-        ${data.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('')}
+        ${asignaturas.map(s => `
+          <option value="${s.id}">${s.nombre}</option>
+        `).join('')}
       `;
       subjectSelect.disabled = false;
     } catch (err) {
@@ -342,17 +372,15 @@ function renderForumView() {
     if (subjectId) params.append('asignatura', subjectId);
     
     try {
-      let response;
-      let data;
-      let content;
+      let content = [];
       
       if (contentType === 'answer') {
-        response = await API._fetch(`/respuestas/?${params}`);
-        data = response.results || response;
+        const response = await API._fetch(`/respuestas/?${params}`);
+        const data = Array.isArray(response) ? response : response.results || [];
         content = data.map(formatAnswer);
       } else {
-        response = await API._fetch(`/preguntas/?${params}`);
-        data = response.results || response;
+        const response = await API._fetch(`/preguntas/?${params}`);
+        const data = Array.isArray(response) ? response : response.results || [];
         content = data.map(formatQuestion);
       }
       
@@ -365,28 +393,30 @@ function renderForumView() {
     }
   }
   
-  // Formatear pregunta
   function formatQuestion(question) {
+    const asignatura = asignaturasMap[question.asignatura];
+    const departamentoNombre = asignatura?.departamento_obj?.nombre || 'No especificado';
+    
     return `
-      <div class="forum-item question ${question.resuelta ? 'resuelta' : ''}">
+      <div class="forum-item question ${question.esta_resuelta ? 'resuelta' : ''}">
         <div class="forum-header">
           <h3>${question.titulo}</h3>
           <span>${new Date(question.fecha_creacion).toLocaleString()}</span>
         </div>
         <p>${question.contenido}</p>
         <div class="forum-meta">
-          <span>Asignatura: ${question.asignatura_nombre || 'No especificada'}</span>
-          <span>${question.resuelta ? '✅ Resuelta' : '❓ Pendiente'}</span>
+          <span>Asignatura: ${asignatura?.nombre || 'No especificada'}</span>
+          <span>Departamento: ${departamentoNombre}</span>
+          <span>${question.esta_resuelta ? '✅ Resuelta' : '❓ Pendiente'}</span>
         </div>
         <button class="btn btn-secondary" data-id="${question.id}">
-          Ver respuestas (${question.num_respuestas || 0})
+          Ver respuestas (${question.total_respuestas || 0})
         </button>
         <div class="forum-answers" id="answers-${question.id}"></div>
       </div>
     `;
   }
   
-  // Formatear respuesta
   function formatAnswer(answer) {
     return `
       <div class="forum-item answer ${answer.aceptada ? 'aceptada' : ''}">
@@ -402,12 +432,12 @@ function renderForumView() {
     `;
   }
   
-  // Cargar respuestas para una pregunta
   async function loadAnswers(questionId, container) {
     container.innerHTML = '<p>Cargando respuestas...</p>';
     
     try {
-      const data = await API._fetch(`/respuestas/?pregunta=${questionId}`);
+      const response = await API._fetch(`/respuestas/?pregunta=${questionId}`);
+      const data = Array.isArray(response) ? response : response.results || [];
       container.innerHTML = data.length 
         ? data.map(formatAnswer).join('') 
         : '<p class="empty">No hay respuestas aún</p>';
@@ -416,8 +446,7 @@ function renderForumView() {
       container.innerHTML = '<p class="error">Error al cargar respuestas</p>';
     }
   }
-  
-  // Event listeners
+
   departmentSelect.addEventListener('change', () => {
     loadSubjects(departmentSelect.value);
     loadForumContent();
@@ -440,12 +469,14 @@ function renderForumView() {
       }
     }
   });
-  
-  // Inicializar
-  loadDepartments();
-  loadForumContent();
-  
-  // Helper para debounce
+
+  loadAllData().then(success => {
+    if (success) {
+      loadDepartments();
+      loadSubjects();
+      loadForumContent();
+    }
+  });
   function debounce(func, wait) {
     let timeout;
     return (...args) => {

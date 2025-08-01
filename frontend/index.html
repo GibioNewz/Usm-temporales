@@ -85,7 +85,7 @@
                         </div>
                         <div class="hourly-container">
                             <div id="hourly-scroll-content" class="hourly-scroll-content">
-                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -200,33 +200,128 @@
                     </div>
                 </div>
             </section>
+            
+            <!-- Vista del foro -->
             <section id="view-forum" class="view">
-            <div class="card">
-                <div class="card-header">
-                <h2><span class="material-symbols-outlined">forum</span> Foro de Ayuda</h2>
+                <div class="card">
+                    <div class="card-header">
+                        <h2><span class="material-symbols-outlined">forum</span> Foro de Ayuda</h2>
+                        <!-- Botón para crear nueva pregunta -->
+                        <button id="btn-create-question" class="btn btn-primary" data-view="create-question">
+                            <span class="material-symbols-outlined">add</span> Crear Pregunta
+                        </button>
+                    </div>
+                    <div class="forum-filters">
+                        <input type="text" id="forum-search" placeholder="Buscar preguntas/respuestas...">
+                        <div class="filter-row">
+                            <select id="forum-department">
+                                <option value="">Todos los departamentos</option>
+                            </select>
+                            <select id="forum-subject" disabled>
+                                <option value="">Todas las asignaturas</option>
+                            </select>
+                            <select id="forum-content-type">
+                                <option value="all">Todo</option>
+                                <option value="question">Preguntas</option>
+                                <option value="answer">Respuestas</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="forum-content" class="forum-content">
+                    </div>
                 </div>
-                <div class="forum-filters">
-                <input type="text" id="forum-search" placeholder="Buscar preguntas/respuestas...">
-                
-                <div class="filter-row">
-                    <select id="forum-department">
-                    <option value="">Todos los departamentos</option>
-                    </select>
-                    
-                    <select id="forum-subject" disabled>
-                    <option value="">Todas las asignaturas</option>
-                    </select>
-                    
-                    <select id="forum-content-type">
-                    <option value="all">Todo</option>
-                    <option value="question">Preguntas</option>
-                    <option value="answer">Respuestas</option>
-                    </select>
+            </section>
+            
+            <!-- Nueva vista para crear pregunta -->
+            <section id="view-create-question" class="view">
+                <div class="card">
+                    <div class="card-header">
+                        <h2><span class="material-symbols-outlined">help</span> Crear Nueva Pregunta</h2>
+                    </div>
+                    <div class="form-container">
+                        <!-- Paso 1: Selección de departamento -->
+                        <div id="step-department" class="form-step active">
+                            <h3>Paso 1: Selecciona un departamento</h3>
+                            <label>
+                                Departamento:
+                                <select id="create-dept-select">
+                                    <option value="">Cargando departamentos...</option>
+                                </select>
+                            </label>
+                            <div class="form-row">
+                                <p>¿No encuentras tu departamento?</p>
+                                <button id="btn-show-dept-form" class="btn btn-secondary">Crear nuevo departamento</button>
+                            </div>
+                            <div id="create-dept-form" style="display: none;">
+                                <label>
+                                    Nombre del departamento:
+                                    <input type="text" id="new-dept-name" required>
+                                </label>
+                                <button id="btn-create-dept" class="btn btn-primary">Crear</button>
+                            </div>
+                            <div class="button-group">
+                                <button id="btn-next-step1" class="btn btn-primary" disabled>Siguiente</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Paso 2: Selección de asignatura -->
+                        <div id="step-subject" class="form-step">
+                            <h3>Paso 2: Selecciona una asignatura</h3>
+                            <label>
+                                Asignatura:
+                                <select id="create-subject-select" disabled>
+                                    <option value="">Primero selecciona un departamento</option>
+                                </select>
+                            </label>
+                            <div class="form-row">
+                                <p>¿No encuentras la asignatura?</p>
+                                <button id="btn-show-subject-form" class="btn btn-secondary">Crear nueva asignatura</button>
+                            </div>
+                            <div id="create-subject-form" style="display: none;">
+                                <label>
+                                    Nombre de la asignatura:
+                                    <input type="text" id="new-subject-name" required>
+                                </label>
+                                <label>
+                                    Código de la asignatura:
+                                    <input type="text" id="new-subject-code" required>
+                                </label>
+                                <button id="btn-create-subject" class="btn btn-primary">Crear</button>
+                            </div>
+                            <div class="button-group">
+                                <button id="btn-prev-step2" class="btn btn-secondary">Anterior</button>
+                                <button id="btn-next-step2" class="btn btn-primary" disabled>Siguiente</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Paso 3: Datos de la pregunta -->
+                        <div id="step-question" class="form-step">
+                            <h3>Paso 3: Detalles de la pregunta</h3>
+                            <label>
+                                ¿Publicar como anónimo?
+                                <input type="checkbox" id="question-anonymous">
+                            </label>
+                            <div id="author-name-group">
+                                <label>
+                                    Tu nombre:
+                                    <input type="text" id="question-author" required>
+                                </label>
+                            </div>
+                            <label>
+                                Título:
+                                <input type="text" id="question-title" required>
+                            </label>
+                            <label>
+                                Contenido:
+                                <textarea id="question-content" rows="5" required></textarea>
+                            </label>
+                            <div class="button-group">
+                                <button id="btn-prev-step3" class="btn btn-secondary">Anterior</button>
+                                <button id="btn-submit-question" class="btn btn-primary">Publicar Pregunta</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                </div>
-                <div id="forum-content" class="forum-content">
-                </div>
-            </div>
             </section>
         </main>
     </div>
@@ -241,8 +336,12 @@
         <a href="#" class="sidebar-nav-link" data-view="schedule">
             <span class="material-symbols-outlined">schedule</span> Horario
         </a>
-        <a href="#" class="sidebar-nav-link" data-view="forum">
+        <a href="#" class="sidebar-nav-link active" data-view="forum">
             <span class="material-symbols-outlined">forum</span> Foro
+        </a>
+        <!-- Nuevo enlace para la vista de crear pregunta -->
+        <a href="#" class="sidebar-nav-link" data-view="create-question" style="display:none;">
+            <span class="material-symbols-outlined">help</span> Crear Pregunta
         </a>
     </aside>
 
