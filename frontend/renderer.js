@@ -568,13 +568,17 @@ function initCreateQuestionView() {
     });
     createDeptBtn.addEventListener('click', async () => {
         const name = $('#new-dept-name').value;
-        if (!name) return;
+        const code = $('#new-dept-code').value;
+        if (!name || !code) return;
         
         try {
-            const newDept = await API._fetch('/departamentos/', {
-                method: 'POST',
-                body: JSON.stringify({ nombre: name })
-            });
+              const newDept = await API._fetch('/departamentos/', {
+                  method: 'POST',
+                  body: JSON.stringify({ 
+                      nombre: name,
+                      codigo: code 
+                  })
+              });
             const option = document.createElement('option');
             option.value = newDept.id;
             option.textContent = newDept.nombre;
@@ -599,7 +603,7 @@ function initCreateQuestionView() {
                 method: 'POST',
                 body: JSON.stringify({ 
                     nombre: name,
-                    codigo: code,
+                    numero: code,
                     departamento: selectedDeptId 
                 })
             });

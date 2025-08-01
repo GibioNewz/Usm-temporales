@@ -251,6 +251,10 @@
                                     Nombre del departamento:
                                     <input type="text" id="new-dept-name" required>
                                 </label>
+                                <label>
+                                    Código (ej: INF, MAT):
+                                    <input type="text" id="new-dept-code" required maxlength="10">
+                                </label>
                                 <button id="btn-create-dept" class="btn btn-primary">Crear</button>
                             </div>
                             <div class="button-group">
@@ -285,6 +289,7 @@
                                 <button id="btn-next-step2" class="btn btn-primary" disabled>Siguiente</button>
                             </div>
                         </div>
+
                         <div id="step-question" class="form-step">
                             <h3>Paso 3: Detalles de la pregunta</h3>
                             <label>
