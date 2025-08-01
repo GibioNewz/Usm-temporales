@@ -26,6 +26,7 @@ window.addEventListener('DOMContentLoaded', () => {
     renderExtrasView();
     renderListadosView();
     renderGestionView();
+    renderForumView();
   });
 });
 
@@ -279,4 +280,177 @@ function renderGestionView() {
         }
     });
     updateAuthUI();
+}
+
+function renderForumView() {
+  if (!window.API) return;
+  
+  const $ = sel => document.querySelector(sel);
+  const departmentSelect = $('#forum-department');
+  const subjectSelect = $('#forum-subject');
+  const contentTypeSelect = $('#forum-content-type');
+  const searchInput = $('#forum-search');
+  const contentContainer = $('#forum-content');
+  
+  async function loadDepartments() {
+    try {
+      const response = await API._fetch('/departamentos/');
+      const data = response.results || response;
+      departmentSelect.innerHTML = `
+        <option value="">Todos los departamentos</option>
+        ${data.map(d => `<option value="${d.id}">${d.nombre}</option>`).join('')}
+      `;
+    } catch (err) {
+      console.error('Error cargando departamentos:', err);
+      departmentSelect.innerHTML = '<option value="">Error al cargar</option>';
+    }
+  }
+  
+  async function loadSubjects(departmentId) {
+    subjectSelect.disabled = true;
+    subjectSelect.innerHTML = '<option value="">Cargando asignaturas...</option>';
+    
+    try {
+      const endpoint = departmentId 
+        ? `/asignaturas/?departamento=${departmentId}`
+        : '/asignaturas/';
+      
+      const response = await API._fetch(endpoint);
+      const data = response.results || response;
+      subjectSelect.innerHTML = `
+        <option value="">Todas las asignaturas</option>
+        ${data.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('')}
+      `;
+      subjectSelect.disabled = false;
+    } catch (err) {
+      console.error('Error cargando asignaturas:', err);
+      subjectSelect.innerHTML = '<option value="">Error al cargar</option>';
+    }
+  }
+  
+  async function loadForumContent() {
+    contentContainer.innerHTML = '<p>Cargando contenido...</p>';
+    
+    const params = new URLSearchParams();
+    const searchText = searchInput.value.trim();
+    const departmentId = departmentSelect.value;
+    const subjectId = subjectSelect.value;
+    const contentType = contentTypeSelect.value;
+    
+    if (searchText) params.append('buscar', searchText);
+    if (departmentId) params.append('departamento', departmentId);
+    if (subjectId) params.append('asignatura', subjectId);
+    
+    try {
+      let response;
+      let data;
+      let content;
+      
+      if (contentType === 'answer') {
+        response = await API._fetch(`/respuestas/?${params}`);
+        data = response.results || response;
+        content = data.map(formatAnswer);
+      } else {
+        response = await API._fetch(`/preguntas/?${params}`);
+        data = response.results || response;
+        content = data.map(formatQuestion);
+      }
+      
+      contentContainer.innerHTML = content.length 
+        ? content.join('') 
+        : '<p class="empty">No se encontraron resultados</p>';
+    } catch (err) {
+      console.error('Error cargando contenido:', err);
+      contentContainer.innerHTML = '<p class="error">Error al cargar el contenido</p>';
+    }
+  }
+  
+  // Formatear pregunta
+  function formatQuestion(question) {
+    return `
+      <div class="forum-item question ${question.resuelta ? 'resuelta' : ''}">
+        <div class="forum-header">
+          <h3>${question.titulo}</h3>
+          <span>${new Date(question.fecha_creacion).toLocaleString()}</span>
+        </div>
+        <p>${question.contenido}</p>
+        <div class="forum-meta">
+          <span>Asignatura: ${question.asignatura_nombre || 'No especificada'}</span>
+          <span>${question.resuelta ? '✅ Resuelta' : '❓ Pendiente'}</span>
+        </div>
+        <button class="btn btn-secondary" data-id="${question.id}">
+          Ver respuestas (${question.num_respuestas || 0})
+        </button>
+        <div class="forum-answers" id="answers-${question.id}"></div>
+      </div>
+    `;
+  }
+  
+  // Formatear respuesta
+  function formatAnswer(answer) {
+    return `
+      <div class="forum-item answer ${answer.aceptada ? 'aceptada' : ''}">
+        <div class="forum-header">
+          <h3>Respuesta a: ${answer.pregunta_titulo || 'Pregunta desconocida'}</h3>
+          <span>${new Date(answer.fecha_creacion).toLocaleString()}</span>
+        </div>
+        <p>${answer.contenido}</p>
+        <div class="forum-meta">
+          <span>${answer.aceptada ? '✅ Respuesta aceptada' : ''}</span>
+        </div>
+      </div>
+    `;
+  }
+  
+  // Cargar respuestas para una pregunta
+  async function loadAnswers(questionId, container) {
+    container.innerHTML = '<p>Cargando respuestas...</p>';
+    
+    try {
+      const data = await API._fetch(`/respuestas/?pregunta=${questionId}`);
+      container.innerHTML = data.length 
+        ? data.map(formatAnswer).join('') 
+        : '<p class="empty">No hay respuestas aún</p>';
+    } catch (err) {
+      console.error('Error cargando respuestas:', err);
+      container.innerHTML = '<p class="error">Error al cargar respuestas</p>';
+    }
+  }
+  
+  // Event listeners
+  departmentSelect.addEventListener('change', () => {
+    loadSubjects(departmentSelect.value);
+    loadForumContent();
+  });
+  
+  subjectSelect.addEventListener('change', loadForumContent);
+  contentTypeSelect.addEventListener('change', loadForumContent);
+  searchInput.addEventListener('input', debounce(loadForumContent, 300));
+  
+  contentContainer.addEventListener('click', async (e) => {
+    if (e.target.matches('.btn[data-id]')) {
+      const questionId = e.target.dataset.id;
+      const container = $(`#answers-${questionId}`);
+      
+      if (container.style.display === 'block') {
+        container.style.display = 'none';
+      } else {
+        container.style.display = 'block';
+        await loadAnswers(questionId, container);
+      }
+    }
+  });
+  
+  // Inicializar
+  loadDepartments();
+  loadForumContent();
+  
+  // Helper para debounce
+  function debounce(func, wait) {
+    let timeout;
+    return (...args) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+  }
 }

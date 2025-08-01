@@ -200,6 +200,34 @@
                     </div>
                 </div>
             </section>
+            <section id="view-forum" class="view">
+            <div class="card">
+                <div class="card-header">
+                <h2><span class="material-symbols-outlined">forum</span> Foro de Ayuda</h2>
+                </div>
+                <div class="forum-filters">
+                <input type="text" id="forum-search" placeholder="Buscar preguntas/respuestas...">
+                
+                <div class="filter-row">
+                    <select id="forum-department">
+                    <option value="">Todos los departamentos</option>
+                    </select>
+                    
+                    <select id="forum-subject" disabled>
+                    <option value="">Todas las asignaturas</option>
+                    </select>
+                    
+                    <select id="forum-content-type">
+                    <option value="all">Todo</option>
+                    <option value="question">Preguntas</option>
+                    <option value="answer">Respuestas</option>
+                    </select>
+                </div>
+                </div>
+                <div id="forum-content" class="forum-content">
+                </div>
+            </div>
+            </section>
         </main>
     </div>
 
@@ -212,6 +240,9 @@
         </a>
         <a href="#" class="sidebar-nav-link" data-view="schedule">
             <span class="material-symbols-outlined">schedule</span> Horario
+        </a>
+        <a href="#" class="sidebar-nav-link" data-view="forum">
+            <span class="material-symbols-outlined">forum</span> Foro
         </a>
     </aside>
 
