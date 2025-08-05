@@ -1,0 +1,23 @@
+# tutorial/.gitignore
+
+# Variables de entorno - NUNCA subir
+.env
+
+# Archivos de Django
+*.pyc
+__pycache__/
+db.sqlite3
+*.log
+logs/
+
+# Archivos subidos
+media/
+
+# IDE
+.vscode/
+.idea/
+
+# Python
+*.egg-info/
+dist/
+build/

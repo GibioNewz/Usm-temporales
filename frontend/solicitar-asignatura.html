@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solicitar Nueva Asignatura - PPP</title>
+    <style>
+        :root {
+            --primary-color: #ffc2d4;
+            --secondary-color: #f7a8be;
+            --background-color: #fff0f5;
+            --card-background: #ffffff;
+            --text-color: #583c47;
+            --text-accent-color: #d1537b;
+            --border-color: #ffe0e9;
+            --border-radius: 12px;
+            --box-shadow: 0 6px 16px rgba(214, 186, 197, 0.5);
+            --success-color: #10b981;
+            --error-color: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            color: var(--text-accent-color);
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.8;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .card {
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .card h2 {
+            color: var(--text-accent-color);
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            background: white;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .btn {
+            background: var(--text-accent-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: #b8456f;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: var(--secondary-color);
+        }
+
+        .btn-secondary:hover {
+            background: #f596b7;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .alert.success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--success-color);
+        }
+
+        .alert.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--error-color);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .recent-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .recent-item {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+
+        .recent-item:last-child {
+            border-bottom: none;
+        }
+
+        .recent-code {
+            font-weight: 600;
+            color: var(--text-accent-color);
+        }
+
+        .recent-name {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-aprobada {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+        }
+
+        .status-pendiente {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding: 2rem;
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+        }
+
+        .back-link {
+            color: var(--text-accent-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Solicitar Nueva Asignatura</h1>
+            <p>Añade las asignaturas que necesites al sistema colaborativo</p>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="stat-total">0</div>
+                <div class="stat-label">Total Asignaturas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="stat-pendientes">0</div>
+                <div class="stat-label">Mis Solicitudes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="stat-departamentos">0</div>
+                <div class="stat-label">Departamentos</div>
+            </div>
+        </div>
+
+        <!-- Contenido Principal -->
+        <div class="main-grid">
+            <!-- Formulario -->
+            <div class="card">
+                <h2>Nueva Solicitud</h2>
+                
+                <div id="alert-container"></div>
+                
+                <form id="solicitud-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="departamento_codigo">Código Departamento *</label>
+                            <input 
+                                type="text" 
+                                id="departamento_codigo" 
+                                name="departamento_codigo" 
+                                placeholder="TEL, INF, FIS..."
+                                maxlength="10"
+                                style="text-transform: uppercase"
+                                required
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label for="numero_asignatura">Número Asignatura *</label>
+                            <input 
+                                type="text" 
+                                id="numero_asignatura" 
+                                name="numero_asignatura" 
+                                placeholder="312, 182, 120..."
+                                required
+                            >
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="nombre_propuesto">Nombre de la Asignatura *</label>
+                        <input 
+                            type="text" 
+                            id="nombre_propuesto" 
+                            name="nombre_propuesto" 
+                            placeholder="Comunicaciones Digitales"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="descripcion_propuesta">Descripción (opcional)</label>
+                        <textarea 
+                            id="descripcion_propuesta" 
+                            name="descripcion_propuesta" 
+                            rows="3"
+                            placeholder="Descripción breve de la asignatura..."
+                        ></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn" id="submit-btn">
+                        <span id="submit-text">Crear Asignatura</span>
+                        <span id="submit-loading" class="loading" style="display: none;"></span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Panel de Información -->
+            <div class="card">
+                <h2>Asignaturas Recientes</h2>
+                <div id="recent-list" class="recent-list">
+                    <div style="text-align: center; padding: 2rem; opacity: 0.6;">
+                        Cargando asignaturas...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>
+                <a href="index.html" class="back-link">← Volver al Dashboard</a> | 
+                <a href="eventos.html" class="back-link">Gestión de Eventos</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+        
+        // Estado de la aplicación
+        let stats = {
+            total: 0,
+            pendientes: 0,
+            departamentos: 0
+        };
+
+        // Elementos del DOM
+        const form = document.getElementById('solicitud-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const submitText = document.getElementById('submit-text');
+        const submitLoading = document.getElementById('submit-loading');
+        const alertContainer = document.getElementById('alert-container');
+
+        // Inicializar aplicación
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarEstadisticas();
+            cargarAsignaturasRecientes();
+            configurarFormulario();
+        });
+
+        // Configurar formulario
+        function configurarFormulario() {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                await enviarSolicitud();
+            });
+
+            // Auto-uppercase para código de departamento
+            document.getElementById('departamento_codigo').addEventListener('input', function(e) {
+                e.target.value = e.target.value.toUpperCase();
+            });
+        }
+
+        // Enviar solicitud
+        async function enviarSolicitud() {
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            // Validaciones
+            if (!data.departamento_codigo || !data.numero_asignatura || !data.nombre_propuesto) {
+                mostrarAlerta('Por favor completa todos los campos obligatorios', 'error');
+                return;
+            }
+
+            setLoadingState(true);
+
+            try {
+                const response = await fetch(`${API_BASE}/solicitudes-asignatura/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    mostrarAlerta(result.message || '¡Asignatura creada exitosamente!', 'success');
+                    form.reset();
+                    cargarEstadisticas();
+                    cargarAsignaturasRecientes();
+                } else {
+                    mostrarAlerta(result.error || 'Error al procesar la solicitud', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                mostrarAlerta('Error de conexión. Verifica que el servidor esté funcionando.', 'error');
+            } finally {
+                setLoadingState(false);
+            }
+        }
+
+        // Cargar estadísticas
+        async function cargarEstadisticas() {
+            try {
+                // Cargar asignaturas
+                const asignaturasResponse = await fetch(`${API_BASE}/asignaturas/`);
+                const asignaturas = await asignaturasResponse.json();
+                
+                // Cargar departamentos
+                const departamentosResponse = await fetch(`${API_BASE}/departamentos/`);
+                const departamentos = await departamentosResponse.json();
+                
+                // Actualizar estadísticas
+                document.getElementById('stat-total').textContent = asignaturas.length || 0;
+                document.getElementById('stat-departamentos').textContent = departamentos.length || 0;
+                document.getElementById('stat-pendientes').textContent = '✓';
+                
+            } catch (error) {
+                console.error('Error cargando estadísticas:', error);
+            }
+        }
+
+        // Cargar asignaturas recientes
+        async function cargarAsignaturasRecientes() {
+            try {
+                const response = await fetch(`${API_BASE}/asignaturas/?ordering=-id`);
+                const data = await response.json();
+                
+                const recentList = document.getElementById('recent-list');
+                
+                if (data.length === 0) {
+                    recentList.innerHTML = `
+                        <div style="text-align: center; padding: 2rem; opacity: 0.6;">
+                            Aún no hay asignaturas registradas
+                        </div>
+                    `;
+                    return;
+                }
+
+                recentList.innerHTML = data.slice(0, 8).map(asignatura => `
+                    <div class="recent-item">
+                        <div>
+                            <div class="recent-code">${asignatura.codigo_completo || asignatura.departamento_codigo + '-' + asignatura.numero}</div>
+                            <div class="recent-name">${asignatura.nombre}</div>
+                        </div>
+                        <span class="status-badge status-aprobada">Activa</span>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Error cargando asignaturas recientes:', error);
+                document.getElementById('recent-list').innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: #ef4444;">
+                        Error cargando datos
+                    </div>
+                `;
+            }
+        }
+
+        // Mostrar alerta
+        function mostrarAlerta(mensaje, tipo) {
+            const alert = document.createElement('div');
+            alert.className = `alert ${tipo}`;
+            alert.style.display = 'block';
+            alert.textContent = mensaje;
+            
+            alertContainer.innerHTML = '';
+            alertContainer.appendChild(alert);
+            
+            // Auto-ocultar después de 5 segundos
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 5000);
+        }
+
+        // Estado de carga
+        function setLoadingState(loading) {
+            submitBtn.disabled = loading;
+            submitText.style.display = loading ? 'none' : 'inline';
+            submitLoading.style.display = loading ? 'inline-block' : 'none';
+        }
+
+        // Auto-refrescar datos cada 30 segundos
+        setInterval(() => {
+            cargarEstadisticas();
+            cargarAsignaturasRecientes();
+        }, 30000);
+    </script>
+</body>
+</html>

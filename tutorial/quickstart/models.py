@@ -184,3 +184,177 @@ class Respuesta(models.Model):
         verbose_name = "Respuesta"
         verbose_name_plural = "Respuestas"
         ordering = ['-es_respuesta_aceptada', '-fecha_creacion']  # Respuestas aceptadas primero, luego por fecha
+
+
+class DocumentoHorario(models.Model):
+    """Modelo para documentos subidos para extracción de horarios"""
+    TIPO_DOCUMENTO_CHOICES = [
+        ('xlsx', 'Excel (.xlsx)'),
+        ('csv', 'CSV (.csv)'),
+        ('txt', 'Texto (.txt)'),
+        ('pdf', 'PDF (.pdf)'),      
+        ('imagen', 'Imagen (.png, .jpg)'),  
+    ]
+    
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('procesando', 'Procesando'),
+        ('completado', 'Completado'),
+        ('error', 'Error'),
+    ]
+    
+    archivo = models.FileField(upload_to='horarios/')
+    tipo_documento = models.CharField(max_length=10, choices=TIPO_DOCUMENTO_CHOICES)
+    asignatura = models.ForeignKey('Asignatura', on_delete=models.CASCADE, related_name='documentos_horario')
+    
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
+    subido_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,                          
+        blank=True,                         
+        related_name='documentos_subidos'   
+    )
+    fecha_subida = models.DateTimeField(auto_now_add=True)
+    fecha_procesamiento = models.DateTimeField(null=True, blank=True)
+    
+    texto_extraido = models.TextField(blank=True)
+    eventos_detectados = models.JSONField(default=list)
+    confianza_ia = models.FloatField(null=True, blank=True)
+    mensaje_error = models.TextField(blank=True)
+    intentos_procesamiento = models.IntegerField(default=0)
+    
+    class Meta:
+        verbose_name = "Documento de Horario"
+        verbose_name_plural = "Documentos de Horarios"
+        ordering = ['-fecha_subida']
+    
+    def __str__(self):
+        return f"{self.asignatura.codigo_completo} - {self.archivo.name}"
+
+
+class EventoExtraido(models.Model):
+    """Eventos extraídos pendientes de aprobación"""
+    documento = models.ForeignKey(DocumentoHorario, on_delete=models.CASCADE, related_name='eventos')
+    
+    titulo_detectado = models.CharField(max_length=300)
+    fecha_detectada = models.DateTimeField()
+    descripcion_detectada = models.TextField(blank=True)
+    confianza_general = models.FloatField(default=0.0)
+    
+    verificado = models.BooleanField(default=False)
+    aprobado = models.BooleanField(default=False)
+    verificado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.SET_NULL, 
+        null=True, blank=True,
+        related_name='eventos_verificados'
+    )
+    fecha_verificacion = models.DateTimeField(null=True, blank=True)
+    
+    evento_creado = models.OneToOneField(
+        'Event', 
+        on_delete=models.SET_NULL, 
+        null=True, blank=True,
+        related_name='evento_extraido'
+    )
+    
+    class Meta:
+        verbose_name = "Evento Extraído"
+        verbose_name_plural = "Eventos Extraídos"
+        ordering = ['fecha_detectada']
+    
+    def __str__(self):
+        return f"{self.titulo_detectado} - {self.fecha_detectada.strftime('%Y-%m-%d')}"
+# Añadir AL FINAL del archivo quickstart/models.py
+
+
+class EventoExtraido(models.Model):
+    """Eventos extraídos pendientes de aprobación"""
+    documento = models.ForeignKey(DocumentoHorario, on_delete=models.CASCADE, related_name='eventos')
+    
+    titulo_detectado = models.CharField(max_length=300)
+    fecha_detectada = models.DateTimeField()
+    descripcion_detectada = models.TextField(blank=True)
+    confianza_general = models.FloatField(default=0.0)
+    
+    verificado = models.BooleanField(default=False)
+    aprobado = models.BooleanField(default=False)
+    verificado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.SET_NULL, 
+        null=True, blank=True,
+        related_name='eventos_verificados'
+    )
+    fecha_verificacion = models.DateTimeField(null=True, blank=True)
+    
+    evento_creado = models.OneToOneField(
+        'Event', 
+        on_delete=models.SET_NULL, 
+        null=True, blank=True,
+        related_name='evento_extraido'
+    )
+    
+    class Meta:
+        verbose_name = "Evento Extraído"
+        verbose_name_plural = "Eventos Extraídos"
+        ordering = ['fecha_detectada']
+    
+    def __str__(self):
+        return f"{self.titulo_detectado} - {self.fecha_detectada.strftime('%Y-%m-%d')}"
+# Añadir al final de quickstart/models.py
+
+class SolicitudAsignatura(models.Model):
+    """Modelo para solicitudes de nuevas asignaturas por parte de usuarios"""
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('aprobada', 'Aprobada'),
+        ('rechazada', 'Rechazada'),
+    ]
+    
+    codigo_propuesto = models.CharField(max_length=20, help_text="Código propuesto, ej: TEL-312, FIS-140")
+    nombre_propuesto = models.CharField(max_length=200, help_text="Nombre de la asignatura")
+    descripcion_propuesta = models.TextField(blank=True, help_text="Descripción opcional")
+    
+    departamento_codigo = models.CharField(max_length=10, help_text="Código del departamento, ej: TEL, FIS")
+    numero_asignatura = models.CharField(max_length=10, help_text="Número de la asignatura, ej: 312")
+    
+    solicitado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='solicitudes_asignatura'
+    )
+    fecha_solicitud = models.DateTimeField(auto_now_add=True)
+    
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
+    revisado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='asignaturas_revisadas'
+    )
+    fecha_revision = models.DateTimeField(null=True, blank=True)
+    comentarios_revision = models.TextField(blank=True)
+    
+    # Relación con la asignatura creada (si se aprueba)
+    asignatura_creada = models.OneToOneField(
+        'Asignatura',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='solicitud_origen'
+    )
+    
+    class Meta:
+        verbose_name = "Solicitud de Asignatura"
+        verbose_name_plural = "Solicitudes de Asignaturas"
+        ordering = ['-fecha_solicitud']
+        unique_together = ['codigo_propuesto']  # Evitar códigos duplicados
+    
+    def __str__(self):
+        return f"{self.codigo_propuesto} - {self.nombre_propuesto} ({self.estado})"
+    
+    def save(self, *args, **kwargs):
+        """Auto-generar código si no se proporciona"""
+        if not self.codigo_propuesto and self.departamento_codigo and self.numero_asignatura:
+            self.codigo_propuesto = f"{self.departamento_codigo.upper()}-{self.numero_asignatura}"
+        super().save(*args, **kwargs)

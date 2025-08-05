@@ -7,3 +7,26 @@ opencv-python-headless
 numpy
 matplotlib
 transformers
+# tutorial/requirements.txt
+
+# Django core
+django==5.2
+djangorestframework
+djangorestframework-simplejwt
+dj-rest-auth
+django-allauth
+django-cors-headers
+
+# Variables de entorno
+python-decouple
+
+# IA y procesamiento
+openai>=1.0.0
+pandas>=2.0.0
+openpyxl>=3.1.0
+
+# Clima (existente)
+openmeteo-requests
+requests-cache
+retry-requests
+numpy

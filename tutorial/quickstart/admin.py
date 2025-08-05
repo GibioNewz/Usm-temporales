@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import PuntoMonitoreo, Event, Departamento, Asignatura, Pregunta, Respuesta
+from .models import PuntoMonitoreo, Event, Departamento, Asignatura, Pregunta, Respuesta, SolicitudAsignatura
 
 # Register your models here.
 
@@ -83,3 +83,16 @@ class RespuestaAdmin(admin.ModelAdmin):
         else:
             return "Sin autor"
     nombre_mostrar.short_description = 'Autor'
+
+@admin.register(SolicitudAsignatura)
+class SolicitudAsignaturaAdmin(admin.ModelAdmin):
+    list_display = ['codigo_propuesto', 'nombre_propuesto', 'solicitado_por', 'estado', 'fecha_solicitud']
+    list_filter = ['estado', 'departamento_codigo', 'fecha_solicitud']
+    search_fields = ['codigo_propuesto', 'nombre_propuesto', 'solicitado_por__username']
+    readonly_fields = ['fecha_solicitud', 'fecha_revision']
+    ordering = ['-fecha_solicitud']
+    
+    def save_model(self, request, obj, form, change):
+        if not change:  # Si es nuevo
+            obj.solicitado_por = request.user
+        super().save_model(request, obj, form, change)
