@@ -83,6 +83,7 @@ class RespuestaSerializer(serializers.ModelSerializer):
         model = Respuesta
         fields = [
             'id',
+            'pregunta',
             'contenido',
             'autor_username',
             'nombre_autor',
