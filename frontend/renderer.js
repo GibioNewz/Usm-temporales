@@ -406,29 +406,40 @@ function renderForumView() {
   }
   
   function formatQuestion(question) {
-    const asignatura = asignaturasMap[question.asignatura];
-    const departamentoNombre = asignatura?.departamento_obj?.nombre || 'No especificado';
-    
-    return `
-      <div class="forum-item question ${question.esta_resuelta ? 'resuelta' : ''}">
-        <div class="forum-header">
-          <h3>${question.titulo}</h3>
-          <span>${new Date(question.fecha_creacion).toLocaleString()}</span>
+      const asignatura = asignaturasMap[question.asignatura];
+      const departamentoNombre = asignatura?.departamento_obj?.nombre || 'No especificado';
+      
+      return `
+        <div class="forum-item question ${question.esta_resuelta ? 'resuelta' : ''}" data-id="${question.id}">
+          <div class="forum-header">
+            <h3>${question.titulo}</h3>
+            <span>${new Date(question.fecha_creacion).toLocaleString()}</span>
+          </div>
+          <p>${question.contenido}</p>
+          <div class="forum-meta">
+            <span>Asignatura: ${asignatura?.nombre || 'No especificada'}</span>
+            <span>Departamento: ${departamentoNombre}</span>
+            <span>${question.esta_resuelta ? '✅ Resuelta' : '❓ Pendiente'}</span>
+          </div>
+          <div class="forum-footer">
+            <button class="btn btn-secondary toggle-answers-btn" data-id="${question.id}">
+              Ver respuestas (${question.total_respuestas || 0})
+            </button>
+            <button class="btn-reply" data-id="${question.id}">
+              <span class="material-symbols-outlined">reply</span> Responder
+            </button>
+          </div>
+          <div class="forum-answers" id="answers-${question.id}"></div>
+          <div class="reply-form-container" id="reply-form-${question.id}" style="display:none;">
+            <form class="reply-form">
+              <textarea placeholder="Escriba su respuesta..." required></textarea>
+              <button type="submit" class="btn btn-primary">Enviar al foro</button>
+            </form>
+          </div>
         </div>
-        <p>${question.contenido}</p>
-        <div class="forum-meta">
-          <span>Asignatura: ${asignatura?.nombre || 'No especificada'}</span>
-          <span>Departamento: ${departamentoNombre}</span>
-          <span>${question.esta_resuelta ? '✅ Resuelta' : '❓ Pendiente'}</span>
-        </div>
-        <button class="btn btn-secondary" data-id="${question.id}">
-          Ver respuestas (${question.total_respuestas || 0})
-        </button>
-        <div class="forum-answers" id="answers-${question.id}"></div>
-      </div>
-    `;
+      `;
   }
-  
+    
   function formatAnswer(answer) {
     return `
       <div class="forum-item answer ${answer.aceptada ? 'aceptada' : ''}">
@@ -468,16 +479,70 @@ function renderForumView() {
   contentTypeSelect.addEventListener('change', loadForumContent);
   searchInput.addEventListener('input', debounce(loadForumContent, 300));
   
-  contentContainer.addEventListener('click', async (e) => {
-    if (e.target.matches('.btn[data-id]')) {
-      const questionId = e.target.dataset.id;
-      const container = $(`#answers-${questionId}`);
+  contentContainer.addEventListener('click', (e) => {
+    if (e.target.matches('.btn-reply')) {
+        const questionId = e.target.dataset.id;
+        const replyFormContainer = $(`#reply-form-${questionId}`);
+        replyFormContainer.style.display = replyFormContainer.style.display === 'none' ? 'block' : 'none';
+        if (replyFormContainer.style.display === 'block') {
+            replyFormContainer.querySelector('textarea').focus();
+        }
+    } else if (e.target.matches('.toggle-answers-btn')) {
+        const questionId = e.target.dataset.id;
+        const answersContainer = $(`#answers-${questionId}`);
+        if (answersContainer.style.display === 'block') {
+            answersContainer.style.display = 'none';
+            e.target.innerText = `Ver respuestas (${e.target.dataset.totalRespuestas})`;
+        } else {
+            answersContainer.style.display = 'block';
+            loadAnswers(questionId, answersContainer);
+            e.target.innerText = 'Ocultar respuestas';
+        }
+    }
+});
+  contentContainer.addEventListener('submit', async (e) => {
+    if (e.target.matches('.reply-form')) {
+      e.preventDefault();
+      const form = e.target;
+      const textarea = form.querySelector('textarea');
+      const questionId = form.closest('.forum-item').dataset.id;
+
+      if (!questionId) {
+        alert('Error: No se pudo encontrar el ID de la pregunta. Por favor, recargue la página.');
+        console.error('No se pudo encontrar el ID de la pregunta para enviar la respuesta.');
+        return;
+      }
+
+      if (!textarea.value.trim()) {
+        alert('Por favor, escribe una respuesta.');
+        return;
+      }
+
+
+      const body = {
+        pregunta: parseInt(questionId, 10), 
+        contenido: textarea.value.trim(),
+        es_anonima: false 
+      };
+
+      try {
+        const response = await API._fetch('/respuestas/', {
+          method: 'POST',
+          body: JSON.stringify(body),
+        });
+
+        console.log('Respuesta enviada con éxito:', response);
+        const answersContainer = $(`#answers-${questionId}`);
+        if (answersContainer.style.display === 'block') {
+           loadAnswers(questionId, answersContainer);
+        }
       
-      if (container.style.display === 'block') {
-        container.style.display = 'none';
-      } else {
-        container.style.display = 'block';
-        await loadAnswers(questionId, container);
+        textarea.value = '';
+        form.closest('.reply-form-container').style.display = 'none';
+
+      } catch (err) {
+        console.error('Error al enviar la respuesta:', err);
+        alert('Error al enviar la respuesta: ' + (err.message || JSON.stringify(err)));
       }
     }
   });
@@ -492,6 +557,7 @@ function renderForumView() {
       loadForumContent();
     }
   });
+
   function debounce(func, wait) {
     let timeout;
     return (...args) => {
@@ -512,7 +578,7 @@ function initCreateQuestionView() {
     const showDeptFormBtn = $('#btn-show-dept-form');
     const createDeptBtn = $('#btn-create-dept');
     const showSubjectFormBtn = $('#btn-show-subject-form');
-    const createSubjectBtn = $('#btn-create-subject');
+    const createSubjectBtn = $('#btn-show-subject-form');
     const nextStep1Btn = $('#btn-next-step1');
     const prevStep2Btn = $('#btn-prev-step2');
     const nextStep2Btn = $('#btn-next-step2');

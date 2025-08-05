@@ -13,8 +13,18 @@ window.API = {
             opts.headers = { ...opts.headers, 'Content-Type': 'application/json' };
         }
 
-        const response = await fetch(`${this.BASE_URL}${endpoint}`, opts);
-        const data = await response.json().catch(() => response.text());
+        const fullUrl = `${this.BASE_URL}${endpoint}`;
+        console.log('Realizando fetch a:', fullUrl, 'con opciones:', opts);
+
+        const response = await fetch(fullUrl, opts);
+        const responseClone = response.clone();
+        
+        let data;
+        try {
+            data = await response.json();
+        } catch (e) {
+            data = await responseClone.text();
+        }
 
         if (!response.ok) {
             throw data;
