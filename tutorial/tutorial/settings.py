@@ -42,12 +42,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'quickstart', # Tu app
+    'quickstart', 
     'rest_framework',
-    'rest_framework.authtoken', # Necesario para la autenticación por token básica de DRF
+    'rest_framework.authtoken', 
     'dj_rest_auth',
     'dj_rest_auth.registration',
-    'rest_framework_simplejwt', # Para JWT (JSON Web Tokens)
+    'rest_framework_simplejwt', 
     "corsheaders",
     'django.contrib.sites',
     'allauth',
@@ -84,6 +84,7 @@ TEMPLATES = [
         },
     },
 ]
+
 
 WSGI_APPLICATION = 'tutorial.wsgi.application'
 

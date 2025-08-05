@@ -1,115 +1,344 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdn.jsdelivr.net; connect-src http://localhost:8000; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;">
-  <title>Panel del Clima</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
-  <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPP Dashboard</title>
+    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 </head>
 <body>
-
-  <div id="app-container">
-    <header>
-      <nav id="main-nav">
-        <a href="#" class="nav-link active" data-view="clima">Clima</a>
-        <a href="#" class="nav-link" data-view="extras">Extras</a>
-        <a href="#" class="nav-link" data-view="horario">Horario de Clases</a>
-        <a href="listados.html" class="nav-link">Eventos</a>
-        <a href="eventos.html" class="nav-link">Usuario</a>
-      </nav>
-      <div class="theme-switch-wrapper">
-          <label class="theme-switch" for="theme-slider">
-              <input type="checkbox" id="theme-slider" />
-              <div class="slider round"></div>
-          </label>
-      </div>
-    </header>
-
-    <main>
-      <section id="view-clima" class="view active">
-        <div class="card-grid">
-          <div class="card now">
-            <h2>Ahora</h2>
-            <div class="now-content">
-              <div class="now-text">
-                <p class="temp"><span id="current-temp">--</span>&deg;C</p>
-                <p class="desc" id="current-desc">Cargando...</p>
-              </div>
-              <span id="now-icon" class="material-symbols-outlined"></span>
+    <div id="app-container">
+        <header>
+            <div id="sidebar-toggle-container">
+                <button id="sidebar-toggle-btn" class="btn btn-secondary">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
             </div>
-            <div class="details">
-              <p>Viento: <span id="current-wind">--</span> km/h</p>
-              <p>Humedad: <span id="current-humidity">--</span>%</p>
-            </div>
-          </div>
-          
-          <div class="card hourly-full">
-            <h2>Próximas 24 Horas</h2>
-            <div class="hourly-container">
-              <div id="hourly-scroll-content" class="hourly-scroll-content">
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      <section id="view-extras" class="view">
-          <div class="card">
-              <div class="summary-grid">
-                <div class="summary-card"><span>Sensación</span><strong id="summary-sensation">--°C</strong></div>
-                <div class="summary-card"><span>UV máx hoy</span><strong id="summary-uv">--</strong></div>
-                <div class="summary-card"><span>Visib. máx</span><strong id="summary-visib">-- km</strong></div>
-                <div class="summary-card"><span>Prec. 24 h</span><strong id="summary-precip">-- mm</strong></div>
-              </div>
-              
-              <div class="extras-container">
-                  <div class="hour-detail-card">
-                      <h3 id="detail-time">00:00 Detalle</h3>
-                      <p class="detail-temp" id="detail-temp">--°C</p>
-                      <div class="detail-content-wrapper">
-                        <ul>
-                            <li>Hum. <span id="detail-hum">--</span>%</li>
-                            <li>UV <span id="detail-uv">--</span></li>
-                            <li>Lluvia <span id="detail-rain">--</span>% / <span id="detail-rain-mm">--</span> mm</li>
-                            <li>Nubes <span id="detail-clouds">--</span>%</li>
-                            <li>Sens. <span id="detail-sensation">--</span>°C</li>
-                        </ul>
-                        <div class="hour-slider-vertical-container">
-                            <input type="range" min="0" max="23" value="23" class="hour-slider-vertical" id="hour-slider-vertical">
+            <nav id="main-nav">
+                <a href="#" class="nav-link active" data-view="listados">
+                    <span class="material-symbols-outlined">home</span> Inicio
+                </a>
+            </nav>
+
+            <div id="user-icon-container">
+                <a href="#" class="nav-link" data-view="gestion" id="nav-gestion">
+                    <span class="material-symbols-outlined">person</span>
+                </a>
+            </div>
+    
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="theme-slider">
+                    <input type="checkbox" id="theme-slider">
+                    <div class="slider round"></div>
+                </label>
+            </div>
+            
+        </header>
+
+        <main>
+            <section id="view-listados" class="view active">
+                <div class="gestion-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><span class="material-symbols-outlined">event</span> Eventos</h2>
+                            <button id="ev-reload" class="btn btn-secondary">
+                                <span class="material-symbols-outlined">refresh</span> Recargar
+                            </button>
                         </div>
-                      </div>
-                  </div>
-                  <div class="chart-container">
-                      <canvas id="weather-chart"></canvas>
-                  </div>
-              </div>
-          </div>
-      </section>
+                        <ul id="ev-list" class="item-list"></ul>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><span class="material-symbols-outlined">pin_drop</span> Puntos de Monitoreo</h2>
+                            <button id="pm-reload" class="btn btn-secondary">
+                                <span class="material-symbols-outlined">refresh</span> Recargar
+                            </button>
+                        </div>
+                        <ul id="pm-list" class="item-list"></ul>
+                    </div>
+                </div>
+            </section>
 
-      <section id="view-horario" class="view">
-         <div class="card">
-          <h2>Horario de Clases</h2>
-          <table class="schedule-table">
-              <thead><tr><th>Bloque</th><th>Horario</th><th>Riesgo Lluvia</th></tr></thead>
-              <tbody>
-                  <tr data-block="1-2"><td>1-2</td><td>08:15-09:25</td><td class="rain-risk">--%</td></tr>
-                  <tr data-block="3-4"><td>3-4</td><td>09:40-10:50</td><td class="rain-risk">--%</td></tr>
-                  <tr data-block="5-6"><td>5-6</td><td>11:05-12:15</td><td class="rain-risk">--%</td></tr>
-                  <tr data-block="7-8"><td>7-8</td><td>12:30-13:40</td><td class="rain-risk">--%</td></tr>
-                  <tr data-block="9-10"><td>9-10</td><td>14:00-15:10</td><td class="rain-risk">--%</td></tr>
-                  <tr data-block="11-12"><td>11-12</td><td>15:30-16:40</td><td class="rain-risk">--%</td></tr>
-                  <tr data-block="13-14"><td>13-14</td><td>17:00-18:10</td><td class="rain-risk">--%</td></tr>
-                  <tr data-block="15-16"><td>15-16</td><td>18:30-19:40</td><td class="rain-risk">--%</td></tr>
-              </tbody>
-          </table>
-        </div>
-      </section>
-    </main>
-  </div>
-  <script src="ppp-data.js"></script>
-  <script src="renderer.js"></script>
+            <section id="view-weather" class="view">
+                <div class="card-grid">
+                    <div class="card now">
+                        <div class="card-header">
+                            <h2><span class="material-symbols-outlined">wb_sunny</span> Clima Actual</h2>
+                        </div>
+                        <div class="now-content">
+                            <div class="now-text">
+                                <span class="temp" id="current-temp"></span>
+                                <span class="desc" id="current-desc"></span>
+                            </div>
+                            <span class="material-symbols-outlined" id="now-icon"></span>
+                        </div>
+                        <div class="details">
+                            <span>Viento: <strong id="current-wind"></strong> km/h</span>
+                            <span>Humedad: <strong id="current-humidity"></strong>%</span>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><span class="material-symbols-outlined">timeline</span> Pronóstico Horario</h2>
+                        </div>
+                        <div class="hourly-container">
+                            <div id="hourly-scroll-content" class="hourly-scroll-content">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="view-extras" class="view">
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><span class="material-symbols-outlined">info</span> Detalles Adicionales</h2>
+                        </div>
+                        <div class="summary-grid">
+                            <div class="summary-card"><span>Sensación Térmica</span><strong id="summary-sensation"></strong></div>
+                            <div class="summary-card"><span>Índice UV</span><strong id="summary-uv"></strong></div>
+                            <div class="summary-card"><span>Visibilidad</span><strong id="summary-visib"></strong></div>
+                            <div class="summary-card"><span>Precip. (24h)</span><strong id="summary-precip"></strong></div>
+                        </div>
+                        <div class="extras-container">
+                            <div class="hour-slider-vertical-container">
+                                <input type="range" min="0" max="23" value="23" class="hour-slider-vertical" id="hour-slider-vertical">
+                            </div>
+                            <div class="hour-detail-card">
+                                <h3 id="detail-time"></h3>
+                                <div class="detail-content-wrapper">
+                                    <div class="detail-main-info">
+                                        <div class="detail-temp" id="detail-temp"></div>
+                                        <ul>
+                                            <li>Humedad: <strong id="detail-hum"></strong>%</li>
+                                            <li>Índice UV: <strong id="detail-uv"></strong></li>
+                                            <li>Lluvia: <strong id="detail-rain"></strong>% (<strong id="detail-rain-mm"></strong>mm)</li>
+                                            <li>Nubosidad: <strong id="detail-clouds"></strong>%</li>
+                                            <li>Sensación: <strong id="detail-sensation"></strong></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="weather-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="view-schedule" class="view">
+                <div class="card">
+                    <div class="card-header">
+                        <h2><span class="material-symbols-outlined">schedule</span> Horario y Riesgo de Lluvia</h2>
+                    </div>
+                    <table class="schedule-table">
+                        <thead>
+                            <tr>
+                                <th>Bloque</th>
+                                <th>Inicio</th>
+                                <th>Fin</th>
+                                <th>Riesgo de Lluvia</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr data-block="1-2"><td>1-2</td><td>08:15</td><td>09:25</td><td class="rain-risk"></td></tr>
+                            <tr data-block="3-4"><td>3-4</td><td>09:40</td><td>10:50</td><td class="rain-risk"></td></tr>
+                            <tr data-block="5-6"><td>5-6</td><td>11:05</td><td>12:15</td><td class="rain-risk"></td></tr>
+                            <tr data-block="7-8"><td>7-8</td><td>12:30</td><td>13:40</td><td class="rain-risk"></td></tr>
+                            <tr data-block="9-10"><td>9-10</td><td>14:00</td><td>15:10</td><td class="rain-risk"></td></tr>
+                            <tr data-block="11-12"><td>11-12</td><td>15:30</td><td>16:40</td><td class="rain-risk"></td></tr>
+                            <tr data-block="13-14"><td>13-14</td><td>17:00</td><td>18:10</td><td class="rain-risk"></td></tr>
+                            <tr data-block="15-16"><td>15-16</td><td>18:30</td><td>19:40</td><td class="rain-risk"></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="view-gestion" class="view">
+                <div class="gestion-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><span class="material-symbols-outlined">login</span> Autenticación</h2>
+                            <span id="auth-badge" class="badge">Offline</span>
+                        </div>
+                        <form id="form-login" class="form-container">
+                            <label>Usuario: <input type="text" id="l-user" required></label>
+                            <label>Contraseña: <input type="password" id="l-pass" required></label>
+                            <div class="button-group">
+                                <button type="submit" class="btn btn-primary full-width">Login</button>
+                                <button type="button" id="btn-logout" class="btn btn-secondary full-width">Logout</button>
+                            </div>
+                            <pre id="auth-out" class="output-box error" style="display: none;"></pre>
+                        </form>
+                    </div>
+                    <div class="card">
+                        <h2><span class="material-symbols-outlined">add_task</span> Crear Evento</h2>
+                        <form id="ev-create" class="form-container">
+                            <label>Título: <input type="text" id="ev-title" required></label>
+                            <label>Descripción: <textarea id="ev-desc"></textarea></label>
+                            <label>Fecha y Hora: <input type="datetime-local" id="ev-date" required></label>
+                            <button type="submit" class="btn btn-primary">Crear Evento</button>
+                            <pre id="ev-create-out" class="output-box error" style="display: none;"></pre>
+                        </form>
+                    </div>
+                    <div class="card">
+                        <h2><span class="material-symbols-outlined">add_location</span> Crear Punto de Monitoreo</h2>
+                        <form id="pm-create" class="form-container">
+                            <label>Nombre: <input type="text" id="pm-name" required></label>
+                            <label>Descripción: <textarea id="pm-desc"></textarea></label>
+                            <div class="form-row">
+                                <label>Latitud: <input type="number" step="any" id="pm-lat" required></label>
+                                <label>Longitud: <input type="number" step="any" id="pm-lon" required></label>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Crear Punto</button>
+                            <pre id="pm-create-out" class="output-box error" style="display: none;"></pre>
+                        </form>
+                    </div>
+                </div>
+            </section>
+            <section id="view-forum" class="view">
+                <div class="card">
+                    <div class="card-header">
+                        <h2><span class="material-symbols-outlined">forum</span> Foro de Ayuda</h2>
+                        <!-- Botón para crear nueva pregunta -->
+                        <button id="btn-create-question" class="btn btn-primary" data-view="create-question">
+                            <span class="material-symbols-outlined">add</span> Crear Pregunta
+                        </button>
+                    </div>
+                    <div class="forum-filters">
+                        <input type="text" id="forum-search" placeholder="Buscar preguntas/respuestas...">
+                        <div class="filter-row">
+                            <select id="forum-department">
+                                <option value="">Todos los departamentos</option>
+                            </select>
+                            <select id="forum-subject" disabled>
+                                <option value="">Todas las asignaturas</option>
+                            </select>
+                            <select id="forum-content-type">
+                                <option value="all">Todo</option>
+                                <option value="question">Preguntas</option>
+                                <option value="answer">Respuestas</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="forum-content" class="forum-content">
+                    </div>
+                </div>
+            </section>
+            <section id="view-create-question" class="view">
+                <div class="card">
+                    <div class="card-header">
+                        <h2><span class="material-symbols-outlined">help</span> Crear Nueva Pregunta</h2>
+                    </div>
+                    <div class="form-container">
+                        <div id="step-department" class="form-step active">
+                            <h3>Paso 1: Selecciona un departamento</h3>
+                            <label>
+                                Departamento:
+                                <select id="create-dept-select">
+                                    <option value="">Cargando departamentos...</option>
+                                </select>
+                            </label>
+                            <div class="form-row">
+                                <p>¿No encuentras tu departamento?</p>
+                                <button id="btn-show-dept-form" class="btn btn-secondary">Crear nuevo departamento</button>
+                            </div>
+                            <div id="create-dept-form" style="display: none;">
+                                <label>
+                                    Nombre del departamento:
+                                    <input type="text" id="new-dept-name" required>
+                                </label>
+                                <button id="btn-create-dept" class="btn btn-primary">Crear</button>
+                            </div>
+                            <div class="button-group">
+                                <button id="btn-next-step1" class="btn btn-primary" disabled>Siguiente</button>
+                            </div>
+                        </div>
+                        <div id="step-subject" class="form-step">
+                            <h3>Paso 2: Selecciona una asignatura</h3>
+                            <label>
+                                Asignatura:
+                                <select id="create-subject-select" disabled>
+                                    <option value="">Primero selecciona un departamento</option>
+                                </select>
+                            </label>
+                            <div class="form-row">
+                                <p>¿No encuentras la asignatura?</p>
+                                <button id="btn-show-subject-form" class="btn btn-secondary">Crear nueva asignatura</button>
+                            </div>
+                            <div id="create-subject-form" style="display: none;">
+                                <label>
+                                    Nombre de la asignatura:
+                                    <input type="text" id="new-subject-name" required>
+                                </label>
+                                <label>
+                                    Código de la asignatura:
+                                    <input type="text" id="new-subject-code" required>
+                                </label>
+                                <button id="btn-create-subject" class="btn btn-primary">Crear</button>
+                            </div>
+                            <div class="button-group">
+                                <button id="btn-prev-step2" class="btn btn-secondary">Anterior</button>
+                                <button id="btn-next-step2" class="btn btn-primary" disabled>Siguiente</button>
+                            </div>
+                        </div>
+                        <div id="step-question" class="form-step">
+                            <h3>Paso 3: Detalles de la pregunta</h3>
+                            <label>
+                                ¿Publicar como anónimo?
+                                <input type="checkbox" id="question-anonymous">
+                            </label>
+                            <div id="author-name-group">
+                                <label>
+                                    Tu nombre:
+                                    <input type="text" id="question-author" required>
+                                </label>
+                            </div>
+                            <label>
+                                Título:
+                                <input type="text" id="question-title" required>
+                            </label>
+                            <label>
+                                Contenido:
+                                <textarea id="question-content" rows="5" required></textarea>
+                            </label>
+                            <div class="button-group">
+                                <button id="btn-prev-step3" class="btn btn-secondary">Anterior</button>
+                                <button id="btn-submit-question" class="btn btn-primary">Publicar Pregunta</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <aside id="sidebar-nav">
+        <a href="#" class="sidebar-nav-link" data-view="weather">
+            <span class="material-symbols-outlined">wb_sunny</span> Clima
+        </a>
+        <a href="#" class="sidebar-nav-link" data-view="extras">
+            <span class="material-symbols-outlined">add_circle</span> Extras
+        </a>
+        <a href="#" class="sidebar-nav-link" data-view="schedule">
+            <span class="material-symbols-outlined">schedule</span> Horario
+        </a>
+        <a href="#" class="sidebar-nav-link active" data-view="forum">
+            <span class="material-symbols-outlined">forum</span> Foro
+        </a>
+        <a href="#" class="sidebar-nav-link" data-view="create-question" style="display:none;">
+            <span class="material-symbols-outlined">help</span> Crear Pregunta
+        </a>
+    </aside>
+
+    <div id="overlay"></div>
+
+    <script src="./ppp-data.js"></script>
+    <script src="./renderer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 </html>

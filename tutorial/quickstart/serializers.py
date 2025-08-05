@@ -7,6 +7,7 @@ from .models import PuntoMonitoreo, Event, Departamento, Asignatura, Pregunta, R
 class PuntoMonitoreoSerializer(serializers.ModelSerializer):
 
     creado_por_username = serializers.ReadOnlyField(source='creado_por.username', allow_null=True)
+    temperatura_texto = serializers.ReadOnlyField()
 
     class Meta:
         model = PuntoMonitoreo 
@@ -15,9 +16,9 @@ class PuntoMonitoreoSerializer(serializers.ModelSerializer):
         fields = [
             'id',                 
             'nombre',
-            'descripcion',
-            'latitud',
-            'longitud',
+            'temperatura_actual',
+            'fecha_ultima_temperatura',
+            'temperatura_texto',
             'creado_por_username',  # El username del creador (solo lectura)
             # 'creado_por',        # Si prefieres exponer el ID del ForeignKey 'creado_por' directamente
             'fecha_creacion',
@@ -28,8 +29,22 @@ class PuntoMonitoreoSerializer(serializers.ModelSerializer):
         # fields = '__all__'
 
         # Si quieres que algunos campos sean de solo lectura en la API (además de los definidos explícitamente):
-        # read_only_fields = ['fecha_creacion', 'ultima_actualizacion']
+        read_only_fields = ['fecha_creacion', 'ultima_actualizacion', 'fecha_ultima_temperatura']
         # (aunque auto_now_add y auto_now ya hacen que sean de solo lectura a nivel de modelo)
+
+
+class TemperaturaReportSerializer(serializers.Serializer):
+    """Serializer para reportar temperatura de sensores"""
+    nombre_punto = serializers.CharField(max_length=150, help_text="Nombre del punto de monitoreo")
+    temperatura = serializers.DecimalField(max_digits=5, decimal_places=2, help_text="Temperatura en grados Celsius")
+    
+    def validate_nombre_punto(self, value):
+        """Validar que el punto de monitoreo existe"""
+        try:
+            PuntoMonitoreo.objects.get(nombre=value)
+        except PuntoMonitoreo.DoesNotExist:
+            raise serializers.ValidationError(f"No existe un punto de monitoreo llamado '{value}'")
+        return value
 
 class EventSerializer(serializers.ModelSerializer):
     # Campo de solo lectura para mostrar el username del administrador que creó el evento
@@ -82,6 +97,7 @@ class RespuestaSerializer(serializers.ModelSerializer):
         model = Respuesta
         fields = [
             'id',
+            'pregunta',
             'contenido',
             'autor_username',
             'nombre_autor',

@@ -3,12 +3,23 @@ from django.db import models
 from django.conf import settings # Para relacionar con el usuario que lo crea
 
 class PuntoMonitoreo(models.Model):
-    nombre = models.CharField(max_length=150, unique=True, help_text="Nombre descriptivo del punto de monitoreo, ej: 'Patio Central USM', 'Laboratorio A1'")
-    descripcion = models.TextField(blank=True, null=True, help_text="Descripción adicional o detalles sobre la ubicación del punto.")
+    nombre = models.CharField(max_length=150, unique=True, help_text="Nombre del lugar, ej: 'Biblioteca', 'Auditorio', 'Laboratorio A1'")
     
-    # Coordenadas para poder obtener datos meteorológicos específicos para este punto
-    latitud = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True, help_text="Latitud del punto de monitoreo.")
-    longitud = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True, help_text="Longitud del punto de monitoreo.")
+    # Última temperatura registrada en este punto
+    temperatura_actual = models.DecimalField(
+        max_digits=5, 
+        decimal_places=2, 
+        null=True, 
+        blank=True, 
+        help_text="Última temperatura registrada en grados Celsius"
+    )
+    
+    # Cuándo se registró la última temperature
+    fecha_ultima_temperatura = models.DateTimeField(
+        null=True, 
+        blank=True, 
+        help_text="Fecha y hora de la última lectura de temperatura"
+    )
     
     # Quién creó este punto (opcional, pero útil para saber quién puede gestionarlo)
     creado_por = models.ForeignKey(
@@ -23,7 +34,23 @@ class PuntoMonitoreo(models.Model):
     ultima_actualizacion = models.DateTimeField(auto_now=True, help_text="Fecha y hora de la última actualización del punto.")
 
     def __str__(self):
+        if self.temperatura_actual is not None:
+            return f"{self.nombre}: {self.temperatura_actual}°C"
         return self.nombre
+    
+    def actualizar_temperatura(self, temperatura):
+        """Actualiza la temperatura actual del punto de monitoreo"""
+        from django.utils import timezone
+        self.temperatura_actual = temperatura
+        self.fecha_ultima_temperatura = timezone.now()
+        self.save()
+    
+    @property
+    def temperatura_texto(self):
+        """Devuelve la temperatura en formato texto legible"""
+        if self.temperatura_actual is not None:
+            return f"{self.temperatura_actual}°C"
+        return "Sin datos"
 
     class Meta:
         verbose_name = "Punto de Monitoreo"
