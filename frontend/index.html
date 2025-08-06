@@ -6,6 +6,17 @@
     <title>PPP Dashboard</title>
     <link rel="stylesheet" href="./style.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        .external-links-container {
+            display: flex;
+            align-items: center;
+            gap: 15px; 
+        }
+        .external-links-container img {
+            height: 24px;
+            width: 24px;
+        }
+    </style>
 </head>
 <body>
     <div id="app-container">
@@ -20,6 +31,22 @@
                 <a href="#" class="nav-link active" data-view="listados">
                     <span class="material-symbols-outlined">home</span> Inicio
                 </a>
+                <div class="external-links-container">
+                    <a href="https://chat.whatsapp.com/LyFubYSenjV9nnAikOx44U" class="nav-link" target="_blank">
+                    <div class="circular-icon">
+                    <img src="./matrix.png" alt="Matrix">
+                    </div>
+                    </a>    
+                    <a href="https://discord.gg/HGwzQr9UJD" class="nav-link" target="_blank">
+                        <img src="./discord-icon.png" alt="Discord">
+                    </a>
+                    <a href="https://usmcl-my.sharepoint.com/:f:/g/personal/carlos_bravora_usm_cl/Et9ifP3zE8RMlQtTDj2X2pgB3FFeag78iDEe6ecSs4MJgA?e=Ij09Tl" class="nav-link" target="_blank">
+                        <img src="./drive-icon.png" alt="Drive">
+                    </a>
+                    <a href="https://chat.whatsapp.com/KtYha3fjjR6K7XUpCDiNb1" class="nav-link" target="_blank">
+                        <img src="./whatsapp-icon.webp" alt="WhatsApp">
+                    </a>
+                </div>
             </nav>
 
             <div id="user-icon-container">
@@ -36,7 +63,7 @@
             </div>
             
         </header>
-
+        
         <main>
             <section id="view-listados" class="view active">
                 <div class="gestion-grid">

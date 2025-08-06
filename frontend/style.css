@@ -1405,3 +1405,16 @@ main {
      z-index: 60;
      transition: background-color 0.3s, color 0.3s;
  }
+ .circular-icon {
+border-radius: 50%;
+overflow: hidden; 
+width: 24px; 
+height: 24px;
+}
+
+.circular-icon img {
+display: block; 
+width: 100%;
+height: 100%;
+object-fit: cover; 
+}
