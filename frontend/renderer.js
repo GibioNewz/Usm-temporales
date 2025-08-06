@@ -444,7 +444,7 @@ function renderForumView() {
     return `
       <div class="forum-item answer ${answer.aceptada ? 'aceptada' : ''}">
         <div class="forum-header">
-          <h3>Respuesta a: ${answer.pregunta_titulo || 'Pregunta desconocida'}</h3>
+          <h3>Respuesta de ${answer.nombre_mostrar || 'Anónimo'}</h3>
           <span>${new Date(answer.fecha_creacion).toLocaleString()}</span>
         </div>
         <p>${answer.contenido}</p>

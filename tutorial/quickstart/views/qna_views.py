@@ -16,6 +16,24 @@ from ..serializers import (
     RespuestaSerializer
 )
 
+
+class AllowAnonymousPostOrReadOnly(permissions.BasePermission):
+    """
+    Custom permission that allows anonymous POST requests and read access to everyone.
+    This is used for Q&A system where anonymous questions and responses are allowed.
+    """
+    def has_permission(self, request, view):
+        # Read permissions for any request
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        
+        # Write permissions for POST (creating new objects) - allow anonymous
+        if request.method == 'POST':
+            return True
+            
+        # For PUT, PATCH, DELETE, require authentication
+        return request.user and request.user.is_authenticated
+
 __all__ = [
     'DepartamentoViewSet', 
     'AsignaturaViewSet', 
@@ -78,9 +96,10 @@ class PreguntaViewSet(viewsets.ModelViewSet):
     """
     API endpoint para gestionar preguntas del sistema Q&A.
     Permite filtrar por asignatura, estado de resolución, y buscar por texto.
+    Permite preguntas anónimas sin autenticación.
     """
     queryset = Pregunta.objects.all().order_by('-fecha_creacion')
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [AllowAnonymousPostOrReadOnly]
     
     def get_serializer_class(self):
         """
@@ -205,10 +224,11 @@ class PreguntaViewSet(viewsets.ModelViewSet):
 class RespuestaViewSet(viewsets.ModelViewSet):
     """
     API endpoint para gestionar respuestas a las preguntas.
+    Permite respuestas anónimas sin autenticación.
     """
     queryset = Respuesta.objects.all().order_by('-fecha_creacion')
     serializer_class = RespuestaSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [AllowAnonymousPostOrReadOnly]
     
     def get_queryset(self):
         queryset = Respuesta.objects.select_related('pregunta', 'autor').all()

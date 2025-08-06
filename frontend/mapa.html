@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="es">
+<!-- °0°0°0°0°0°0°0°0°0°0° CABEZA °0°0°0°0°0°0°0°0°0°0° -->
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mapa por pisos</title>
+
+<!-- °0°0°0°0°0° LAYOUT °0°0°0°0°0° -->
+<style>
+:root{
+  --pink-bg : #ffa7d7;
+  --pink-box: #ff64ac;
+  --orange-hi : #f05724;
+  --shadow  : rgba(0,0,0,.08);
+  --gap     : 1.8rem;}
+*{box-sizing:border-box;margin:0}
+/*estilo global*/
+body{
+  background:var(--pink-bg);
+  font:500 1rem/1.35 system-ui,sans-serif}
+/*selector de piso*/
+.tracker-wrap{
+  display:flex;
+  justify-content:center;
+  padding:1.8rem 0 .6rem}
+/*box rosado con todos los pisos*/
+.tracker{
+  position:relative;
+  display:flex;align-items:center;
+  gap:var(--gap);
+  padding:1.4rem 2.4rem;
+  background:var(--pink-box);
+  border-radius:1.15rem;
+  box-shadow:0 4px 16px var(--shadow);
+  overflow:hidden}
+/*box naranja (piso + n°)*/
+#pill{
+  position:absolute;  top:50%; left:0;
+  height:70%;
+  display:flex; align-items:center;
+  gap:var(---gap);
+  padding-inline:1.05rem;
+  background:var(--orange-hi);
+  color:#ffffffab;font-weight:600;
+  border-radius:.9rem;
+  pointer-events:none;
+  transform:translateY(-50%);
+  transition:transform .35s cubic-bezier(.4,0,.2,1);}
+/*botones resto de pisos*/
+button{background:none;border:none;
+  padding:.4rem 1rem;
+  font:inherit;
+  color:#9c0c0c;
+  cursor:pointer;z-index:1;
+  transition:transform .25s}
+button:hover{transform:scale(1.08)}  
+button.active{color:transparent}
+/*buscador de salas*/
+#search{
+  display:block;
+  width:80%;max-width:320px;
+  margin:.2rem auto .8rem;
+  padding:.6rem 1rem;
+  border:5px solid #ee7a57;border-radius:.6rem;
+  font:500 1rem/1.1 system-ui,sans-serif}
+/*generador de T° aleatorias*/
+#rand{
+  display:block;margin:.2rem auto 1.4rem;
+  padding:.55rem 1.6rem;
+  border:none;
+  background:#ef4a25;color:#fff;
+  border-radius:.6rem;
+  font:500 1rem/1;cursor:pointer;
+  box-shadow:0 2px 6px var(--shadow)}
+#rand:hover{filter:brightness(1.1)}
+/*mapa*/
+#map-wrapper{
+  width:80%;
+  margin:0 auto 2rem;
+  min-height:55vh;
+  display:flex; 
+  justify-content:center;
+  align-items:center;
+  position:relative}
+.floor-map{
+  position:absolute;
+  inset:0;display:flex;
+  justify-content:center; align-items:center;
+  opacity:0;pointer-events:none;transition:opacity .4s}
+.floor-map.active{opacity:1;pointer-events:auto}
+/*animación cambio de mapa*/
+@keyframes up{from{transform:translateY(100%)}}   .slide-up{animation:up .4s ease}
+@keyframes down{from{transform:translateY(-100%)}}.slide-down{animation:down .4s ease}
+/*imagen vectorizada dentro del floor-map*/
+svg{
+  max-width:100%;
+  max-height:calc(100vh - 360px);
+  transform-origin:center}
+/*zoom*/
+.zoom-box{position:fixed;right:2.2rem;bottom:2.2rem;display:flex;
+  flex-direction:column;gap:.6rem;z-index:50}
+.zoom-btn{width:2.8rem;height:2.8rem;border:none;border-radius:50%;
+  background:#fb5f3c;color:#fff;font-size:1.4rem;cursor:pointer;
+  box-shadow:0 2px 6px var(--shadow);display:flex;justify-content:center;align-items:center}
+.zoom-btn:hover{filter:brightness(1.15)}
+/*tarjeta de info*/
+.tooltip{position:absolute;left:0;top:0;transform:translate(-50%,-115%);
+  padding:.45rem .9rem;background:#fff;border-radius:.55rem;
+  box-shadow:0 4px 14px var(--shadow);pointer-events:none;
+  font:500 .9rem/1 system-ui,sans-serif;white-space:nowrap;z-index:60}
+/*botones filtros*/
+.filter-wrap{display:flex;justify-content:center;gap:.9rem;margin-top:1rem}
+.filter-btn{padding:.4rem .8rem;border:none;border-radius:.55rem;
+  background:#ee5c37;color:#fff;cursor:pointer;font:500 .88rem/1;
+  box-shadow:0 2px 6px var(--shadow)}
+.filter-btn:hover{filter:brightness(1.15)}
+.filter-btn[data-cat="reset"]{background:#ea1717}
+</style>
+</head>
+
+<!-- °0°0°0°0°0°0°0°0°0°0° CUERPO HTML °0°0°0°0°0°0°0°0°0°0° -->
+<body>
+<!--seleccionar piso -->
+<div class="tracker-wrap">
+  <div class="tracker" id="tracker">
+    <div id="pill"><span>PISO&nbsp;</span><span id="pill-num">1</span></div>
+    <button class="floor-btn active" data-floor="1">1</button>
+    <button class="floor-btn"        data-floor="2">2</button>
+    <button class="floor-btn"        data-floor="3">3</button>
+    <button class="floor-btn"        data-floor="4">4</button>
+  </div>
+</div>
+<!--buscador sala-->
+<input id="search" type="text" placeholder="Buscar sala…" list="roomList">
+<datalist id="roomList"></datalist>
+<!--generador de temperaturas-->
+<button id="rand">Generar temperaturas aleatorias</button>
+<!--para cambiar de mapas-->
+<div id="map-wrapper">
+  <div class="floor-map active" data-floor="1"></div>
+  <div class="floor-map"        data-floor="2"></div>
+  <div class="floor-map"        data-floor="3"></div>
+  <div class="floor-map"        data-floor="4"></div>
+</div>
+<!--zoom-->
+<div class="zoom-box">
+  <button class="zoom-btn" id="plus">＋</button>
+  <button class="zoom-btn" id="minus">－</button>
+</div>
+<!--filtro-->
+<div class="filter-wrap">
+  <button class="filter-btn" data-cat="ascensor">Ascensores</button>
+  <button class="filter-btn" data-cat="bano">Baños</button>
+  <button class="filter-btn" data-cat="fumadores">Zona fumadores</button>
+  <button class="filter-btn" data-cat="reset">Reset</button>
+</div>
+
+<!-- °0°0°0°0°0°0°0°0°0°0° JavaScript °0°0°0°0°0°0°0°0°0°0° -->
+<script type="module">
+//diccionario de ID y títulos, se hizo aparte porque son muchos
+import NAME_MAP from './nameMap.js';
+//variables
+const tracker=document.getElementById('tracker'),
+      pill   =document.getElementById('pill'),
+      pillNum=document.getElementById('pill-num'),
+      btns   =[...document.querySelectorAll('.floor-btn')],
+      maps   =[...document.querySelectorAll('.floor-map')],
+      searchI=document.getElementById('search'),
+      roomList=document.getElementById('roomList'),
+      banioAscFum=/^(bano|ascensor|fumadores)/i,//ids que no se colorean
+      shapeTags=['rect','path','polygon','circle','ellipse','polyline'];
+let current=1, //piso inicial
+  zoom=1, //escala inicial
+  minZ=1, maxZ=3, stepZ=.25;
+//autocompletador del buscador
+Object.values(NAME_MAP).forEach(n=>{
+  const opt=document.createElement('option'); opt.value=n; roomList.appendChild(opt);
+});
+Object.keys(NAME_MAP).forEach(id=>{
+  const opt=document.createElement('option'); opt.value=id; roomList.appendChild(opt);
+});
+const validTerms=[...roomList.options].map(o=>o.value.toLowerCase());
+//función que mueve el box del selector de piso
+function movePill(btn){
+  pillNum.textContent=btn.textContent;
+  pill.style.width='auto';
+  const w=pill.getBoundingClientRect().width,
+        tr=tracker.getBoundingClientRect(),
+        br=btn.getBoundingClientRect(),
+        left=br.left-tr.left+(br.width-w)/2;
+  pill.style.transform = `translate(${left}px, -50%)`;
+}
+movePill(btns[0]);
+//handler botones para cambiar de piso, mueve el box (pill), llama a swapMaps() y actualiza el zoom, filtro y tarjeta de textos
+btns.forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const dest=+btn.dataset.floor;
+    if(dest===current) return;
+    btns.forEach(b=>b.classList.toggle('active',b===btn));
+    movePill(btn); swapMaps(dest); current=dest;
+    applyZoom(); applyFilter(activeFilter); hideTip();
+  });
+});
+//función para cambiar mapa dest:destination al mapa que cambiaremos y su animación
+function swapMaps(dest){
+  const from=maps.find(m=>+m.dataset.floor===current),
+        to  =maps.find(m=>+m.dataset.floor===dest),
+        dir =dest>current?'slide-up':'slide-down';
+  to.classList.add('active',dir);
+  from.classList.remove('active','slide-up','slide-down'); 
+  to.addEventListener('animationend',()=>to.classList.remove('slide-up','slide-down'),{once:true});
+}
+const tToColor=t=>`hsla(${240-(t/40)*240},90%,60%,.7)`; // gradiente de celeste a rojo de 0 a 40°
+//función que colorea las áreas
+function colorize(svg){
+  svg.querySelectorAll('[id]').forEach(el=>{
+    const tag=el.tagName.toLowerCase();
+    if(banioAscFum.test(el.id)||!shapeTags.includes(tag)) return; //omite ascensores, baños, zona de fumadores
+    const t=+(el.dataset.temp||0);
+    el.style.fill=tToColor(t);
+    el.setAttribute('title',`${t} °C`);
+  });
+}
+//función para generar una T° aleatoria (entre 0 y 40°C) y llama a colorize
+function randomTemps(){
+  maps.forEach(f=>{
+    f.querySelectorAll('[id]').forEach(el=>{
+      const tag=el.tagName.toLowerCase();
+      if(banioAscFum.test(el.id)||!shapeTags.includes(tag)) return;
+      el.dataset.temp=(Math.random()*40).toFixed(1);
+    });
+    colorize(f.querySelector('svg'));
+  });
+}
+document.getElementById('rand').onclick=randomTemps; //el botón rand lo ejecuta
+//zoom
+function applyZoom(){
+  const svg=maps.find(m=>m.classList.contains('active'))?.querySelector('svg');
+  if(svg) svg.style.transform=`scale(${zoom})`;
+}
+document.getElementById('plus').onclick=()=>{zoom=Math.min(maxZ,zoom+stepZ);applyZoom()};
+document.getElementById('minus').onclick=()=>{zoom=Math.max(minZ,zoom-stepZ);applyZoom()};
+//Tooltip: tarjeta de información con el NOMBRE y la TEMPERATURA para la sala seleccionada
+let tip=null;
+function hideTip(){tip?.remove();tip=null;}
+function showTip(el){
+  hideTip();
+  if(banioAscFum.test(el.id)||!el.dataset.temp) return; //ignora baños, ascensores, fumadores
+  const titulo=NAME_MAP[el.id]??el.id;
+  tip=document.createElement('div'); tip.className='tooltip';
+  tip.textContent=`${titulo} • ${el.dataset.temp} °C`;
+  document.body.appendChild(tip);
+  const r=el.getBoundingClientRect();
+  tip.style.left=`${r.left+r.width/2}px`; tip.style.top=`${r.top}px`;
+}
+//filtro: maneja las opacidades de las áreas buscadas. 1:seleccionada
+const filterBtns=[...document.querySelectorAll('.filter-btn')];
+let activeFilter='reset';
+function applyFilter(cat){
+  activeFilter=cat;
+  const svg=maps.find(m=>m.classList.contains('active'))?.querySelector('svg');
+  if(!svg) return;
+  svg.querySelectorAll(shapeTags.join(',')).forEach(el=>{
+    const id=el.id.toLowerCase();
+    if(cat==='reset'){el.style.opacity='.85'} //reset
+    else{
+      const match=(cat==='bano')? /^bano/i.test(id)
+               :(cat==='ascensor')? /^ascensor/i.test(id)
+               :(cat==='fumadores')? /^fumadores/i.test(id):false;
+      el.style.opacity=match?'1':'.15';
+    }
+  });
+}
+filterBtns.forEach(b=>b.onclick=()=>applyFilter(b.dataset.cat));
+//buscador de sala, y llama a findAndShow
+searchI.addEventListener('keydown',e=>{
+  if(e.key!=='Enter') return;
+  const q=searchI.value.trim().toLowerCase();
+  if(!validTerms.includes(q)){
+    alert('Sala no encontrada'); return;
+  }
+  findAndShow(q);
+});
+//función para encontrar la sala buscada y te lleva al piso correspondiente
+async function findAndShow(query){
+  for(const m of maps){
+    const svg=m.querySelector('svg'); if(!svg) continue;
+    for(const el of svg.querySelectorAll('[id]')){
+      const id=el.id, name=(NAME_MAP[id]??'').toLowerCase();
+      if(id.toLowerCase()===query||name===query){
+        const floor=+m.dataset.floor;
+        if(floor!==current){
+          btns[floor-1].click();
+          await new Promise(r=>setTimeout(r,400));
+        }
+        showTip(el); return;
+      }
+    }
+  }
+}
+//carga los mapas vectoriales de cada piso
+const files={1:'piso1.svg',2:'piso2.svg',3:'piso3.svg',4:'piso4.svg'};
+Promise.all(maps.map(async m=>{
+  try{
+    const raw=await (await fetch(files[m.dataset.floor])).text();
+    m.innerHTML=raw.replace(/<script[\s\S]*?<\/script>/ig,'');
+    const svg=m.querySelector('svg');
+    svg.addEventListener('click',e=>{
+      const el=e.target.closest('[id]'); if(el) showTip(el);
+    });
+  }catch{m.textContent='SVG no encontrado'}
+})).then(randomTemps);
+</script>
+</body>
+</html>
