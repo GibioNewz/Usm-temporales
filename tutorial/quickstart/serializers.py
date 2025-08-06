@@ -258,7 +258,8 @@ class DocumentoHorarioSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("El archivo es requerido")
         
         # Validar extensión
-        allowed_extensions = ['.txt', '.csv', '.xlsx']
+        allowed_extensions = ['.txt', '.csv', '.xlsx', '.pdf', '.png', '.jpg', '.jpeg']  # ← NUEVA LÍNEA
+
         file_extension = os.path.splitext(value.name)[1].lower()
         
         if file_extension not in allowed_extensions:
@@ -284,7 +285,11 @@ class DocumentoHorarioSerializer(serializers.ModelSerializer):
         extension_map = {
             '.txt': 'txt',
             '.csv': 'csv',
-            '.xlsx': 'xlsx'
+            '.xlsx': 'xlsx',
+            '.pdf': 'pdf',
+            '.png': 'imagen',
+            '.jpg': 'imagen',
+            '.jpeg': 'imagen'
         }
         
         validated_data['tipo_documento'] = extension_map.get(file_extension, 'txt')

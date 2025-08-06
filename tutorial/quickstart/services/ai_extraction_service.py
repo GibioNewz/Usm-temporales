@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import List, Dict, Any
 import base64
 import os
-
+from django.utils import timezone
 import openai
 from django.conf import settings
 import pandas as pd
@@ -418,7 +418,7 @@ class AIExtractionService:
                 logger.warning(f"Error procesando evento {evento}: {str(e)}")
                 continue
         
-            return eventos_procesados
+        return eventos_procesados
     
     def _parsear_fecha(self, fecha_str: str) -> datetime:
         """Intenta parsear una fecha en múltiples formatos con timezone"""

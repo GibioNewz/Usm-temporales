@@ -2,7 +2,8 @@
 """
 Vistas de API para el sistema de extracción de horarios con IA
 """
-
+import os
+from datetime import datetime
 import logging
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
@@ -74,7 +75,9 @@ class DocumentoHorarioViewSet(viewsets.ModelViewSet):
             
             # Sobrescribir el tipo_documento en los datos validados
             serializer.validated_data['tipo_documento'] = tipo_detectado
-        
+            print(f"DEBUG: Archivo {archivo.name}, tamaño: {archivo.size} bytes")
+            if archivo.size > 50 * 1024 * 1024:  # 50MB
+                return Response({'error': 'Archivo muy grande'}, status=400)
         # Asignar usuario solo si está autenticado
         if self.request.user.is_authenticated:
             documento = serializer.save(subido_por=self.request.user)
@@ -99,11 +102,11 @@ class DocumentoHorarioViewSet(viewsets.ModelViewSet):
             
             if resultado['success']:
                 eventos_para_json = []
-            for evento in resultado['eventos']:
-                evento_json = evento.copy()
-                if isinstance(evento_json['fecha'], datetime):
-                    evento_json['fecha'] = evento_json['fecha'].isoformat()
-                eventos_para_json.append(evento_json)
+                for evento in resultado['eventos']:  # ← BIEN INDENTADO
+                    evento_json = evento.copy()
+                    if isinstance(evento_json['fecha'], datetime):
+                        evento_json['fecha'] = evento_json['fecha'].isoformat()
+                    eventos_para_json.append(evento_json)
                 # Actualizar documento con resultados
                 documento.texto_extraido = resultado['texto_extraido']
                 documento.eventos_detectados = eventos_para_json  # <- USAR LA VERSIÓN JSON
@@ -134,7 +137,9 @@ class DocumentoHorarioViewSet(viewsets.ModelViewSet):
     
     def _crear_eventos_extraidos(self, documento, eventos):
         """Crea objetos EventoExtraido a partir de los eventos detectados"""
-        for evento_data in eventos:
+        print(f"DEBUG: Intentando crear {len(eventos)} eventos")
+        for i, evento_data in enumerate(eventos):
+            print(f"DEBUG: Evento {i+1}: {evento_data}")
             try:
                 EventoExtraido.objects.create(
                     documento=documento,
@@ -143,7 +148,9 @@ class DocumentoHorarioViewSet(viewsets.ModelViewSet):
                     descripcion_detectada=evento_data['descripcion'],
                     confianza_general=evento_data['confianza_general']
                 )
+                print(f"DEBUG: Evento {i+1} creado exitosamente")
             except Exception as e:
+                print(f"DEBUG: Error creando evento {i+1}: {str(e)}")
                 logger.warning(f"Error creando evento extraído: {str(e)}")
     
     @action(detail=True, methods=['post'])
