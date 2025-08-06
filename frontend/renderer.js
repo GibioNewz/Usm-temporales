@@ -55,6 +55,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('view-create-question')) {
         initCreateQuestionView();
     }
+    initMapView();
   });
 });
 
@@ -757,4 +758,196 @@ function initCreateQuestionView() {
         }
     });
     loadDepartments();
+}
+let mapaInicializado = false;
+
+function initMapView() {
+    if (mapaInicializado) return; 
+    if (!document.getElementById('view-mapa')) return;
+    console.log("Inicializando la vista del mapa...");
+    mapaInicializado = true;
+    const NAME_MAP = window.NAME_MAP;
+    const tracker = document.getElementById('tracker'),
+        pill = document.getElementById('pill'),
+        pillNum = document.getElementById('pill-num'),
+        btns = [...document.querySelectorAll('#view-mapa .floor-btn')],
+        maps = [...document.querySelectorAll('#view-mapa .floor-map')],
+        searchI = document.getElementById('search'),
+        roomList = document.getElementById('roomList'),
+        banioAscFum = /^(bano|ascensor|fumadores)/i,
+        shapeTags = ['rect', 'path', 'polygon', 'circle', 'ellipse', 'polyline'];
+    let current = 1,
+        zoom = 1,
+        minZ = 1, maxZ = 3, stepZ = .25;
+
+    Object.values(NAME_MAP).forEach(n => {
+        const opt = document.createElement('option');
+        opt.value = n;
+        roomList.appendChild(opt);
+    });
+    Object.keys(NAME_MAP).forEach(id => {
+        const opt = document.createElement('option');
+        opt.value = id;
+        roomList.appendChild(opt);
+    });
+    const validTerms = [...roomList.options].map(o => o.value.toLowerCase());
+
+    function movePill(btn) {
+        pillNum.textContent = btn.textContent;
+        pill.style.width = 'auto';
+        const w = pill.getBoundingClientRect().width,
+            tr = tracker.getBoundingClientRect(),
+            br = btn.getBoundingClientRect(),
+            left = br.left - tr.left + (br.width - w) / 2;
+        pill.style.transform = `translate(${left}px, -50%)`;
+    }
+
+    movePill(btns[0]);
+
+    btns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const dest = +btn.dataset.floor;
+            if (dest === current) return;
+            btns.forEach(b => b.classList.toggle('active', b === btn));
+            movePill(btn);
+            swapMaps(dest);
+            current = dest;
+            applyZoom();
+            applyFilter(activeFilter);
+            hideTip();
+        });
+    });
+
+    function swapMaps(dest) {
+        const from = maps.find(m => +m.dataset.floor === current),
+            to = maps.find(m => +m.dataset.floor === dest),
+            dir = dest > current ? 'slide-up' : 'slide-down';
+        to.classList.add('active', dir);
+        from.classList.remove('active', 'slide-up', 'slide-down');
+        to.addEventListener('animationend', () => to.classList.remove('slide-up', 'slide-down'), { once: true });
+    }
+
+    const tToColor = t => `hsla(${240 - (t / 40) * 240}, 90%, 60%, .7)`;
+
+    function colorize(svg) {
+        svg.querySelectorAll('[id]').forEach(el => {
+            const tag = el.tagName.toLowerCase();
+            if (banioAscFum.test(el.id) || !shapeTags.includes(tag)) return;
+            const t = +(el.dataset.temp || 0);
+            el.style.fill = tToColor(t);
+            el.setAttribute('title', `${t} °C`);
+        });
+    }
+
+    function randomTemps() {
+        maps.forEach(f => {
+            const svg = f.querySelector('svg');
+            if (!svg) return;
+            svg.querySelectorAll('[id]').forEach(el => {
+                const tag = el.tagName.toLowerCase();
+                if (banioAscFum.test(el.id) || !shapeTags.includes(tag)) return;
+                el.dataset.temp = (Math.random() * 40).toFixed(1);
+            });
+            colorize(svg);
+        });
+    }
+    document.getElementById('rand').onclick = randomTemps;
+
+    function applyZoom() {
+        const svg = maps.find(m => m.classList.contains('active'))?.querySelector('svg');
+        if (svg) svg.style.transform = `scale(${zoom})`;
+    }
+    document.getElementById('plus').onclick = () => { zoom = Math.min(maxZ, zoom + stepZ); applyZoom() };
+    document.getElementById('minus').onclick = () => { zoom = Math.max(minZ, zoom - stepZ); applyZoom() };
+
+    let tip = null;
+    function hideTip() { tip?.remove(); tip = null; }
+
+    function showTip(el) {
+        hideTip();
+        const parentCard = el.closest('.card');
+        if (!parentCard) return;
+
+        if (banioAscFum.test(el.id)) return;
+        const temp = el.dataset.temp;
+        const titulo = NAME_MAP[el.id] ?? el.id;
+
+        tip = document.createElement('div');
+        tip.className = 'tooltip';
+        tip.textContent = temp ? `${titulo} • ${temp} °C` : titulo;
+        
+        parentCard.appendChild(tip);
+
+        const r = el.getBoundingClientRect();
+        const parentRect = parentCard.getBoundingClientRect();
+        tip.style.left = `${r.left - parentRect.left + r.width / 2}px`;
+        tip.style.top = `${r.top - parentRect.top}px`;
+    }
+
+    let activeFilter = 'reset';
+    function applyFilter(cat) {
+        activeFilter = cat;
+        const svg = maps.find(m => m.classList.contains('active'))?.querySelector('svg');
+        if (!svg) return;
+        svg.querySelectorAll(shapeTags.join(',')).forEach(el => {
+            const id = el.id.toLowerCase();
+            if (cat === 'reset') { el.style.opacity = '.85' }
+            else {
+                const match = (cat === 'bano') ? /^bano/i.test(id)
+                    : (cat === 'ascensor') ? /^ascensor/i.test(id)
+                    : (cat === 'fumadores') ? /^fumadores/i.test(id) : false;
+                el.style.opacity = match ? '1' : '.15';
+            }
+        });
+    }
+    document.querySelectorAll('#view-mapa .filter-btn').forEach(b => b.onclick = () => applyFilter(b.dataset.cat));
+
+    searchI.addEventListener('keydown', e => {
+        if (e.key !== 'Enter') return;
+        const q = searchI.value.trim().toLowerCase();
+        if (!validTerms.includes(q)) {
+            alert('Sala no encontrada'); return;
+        }
+        findAndShow(q);
+    });
+
+    async function findAndShow(query) {
+        for (const m of maps) {
+            const svg = m.querySelector('svg');
+            if (!svg) continue;
+            for (const el of svg.querySelectorAll('[id]')) {
+                const id = el.id, name = (NAME_MAP[id] ?? '').toLowerCase();
+                if (id.toLowerCase() === query || name === query) {
+                    const floor = +m.dataset.floor;
+                    if (floor !== current) {
+                        btns[floor - 1].click();
+                        await new Promise(r => setTimeout(r, 400));
+                    }
+                    setTimeout(() => showTip(el), 50);
+                    return;
+                }
+            }
+        }
+    }
+
+    const files = { 1: './piso1.svg', 2: './piso2.svg', 3: './piso3.svg', 4: './piso4.svg' };
+    Promise.all(maps.map(async m => {
+        try {
+            const raw = await (await fetch(files[m.dataset.floor])).text();
+            m.innerHTML = raw.replace(/<script[\s\S]*?<\/script>/ig, '');
+            const svg = m.querySelector('svg');
+            svg.addEventListener('click', e => {
+                const el = e.target.closest('[id]');
+                if (el) showTip(el);
+            });
+            svg.addEventListener('click', (e) => {
+                if (e.target.tagName.toLowerCase() === 'svg') {
+                    hideTip();
+                }
+            }, true);
+        } catch(e) { 
+            m.textContent = 'Error: No se pudo cargar el archivo del mapa. Asegúrate de que el archivo ' + files[m.dataset.floor] + ' exista.';
+            console.error(e);
+        }
+    })).then(randomTemps);
 }

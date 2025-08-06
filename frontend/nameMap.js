@@ -1,4 +1,4 @@
-export default {
+window.NAME_MAP = {
   ascensor1 : "Ascensor 1",
   ascensor2 : "Ascensor 2",
   ascensor3 : "Ascensor 3",

@@ -60,7 +60,43 @@
                     </div>
                 </div>
             </section>
-
+            <section id="view-mapa" class="view">
+                <div class="card"> 
+                    <div class="card-header">
+                        <h2><span class="material-symbols-outlined">map</span> Mapa Interactivo</h2>
+                    </div>
+                    <div class="map-container">
+                        <div class="tracker-wrap">
+                          <div class="tracker" id="tracker">
+                            <div id="pill"><span>PISO&nbsp;</span><span id="pill-num">1</span></div>
+                            <button class="floor-btn active" data-floor="1">1</button>
+                            <button class="floor-btn"        data-floor="2">2</button>
+                            <button class="floor-btn"        data-floor="3">3</button>
+                            <button class="floor-btn"        data-floor="4">4</button>
+                          </div>
+                        </div>
+                        <input id="search" type="text" placeholder="Buscar sala…" list="roomList">
+                        <datalist id="roomList"></datalist>
+                        <button id="rand">Generar temperaturas aleatorias</button>
+                        <div id="map-wrapper">
+                          <div class="floor-map active" data-floor="1"></div>
+                          <div class="floor-map"        data-floor="2"></div>
+                          <div class="floor-map"        data-floor="3"></div>
+                          <div class="floor-map"        data-floor="4"></div>
+                        </div>
+                        <div class="zoom-box">
+                          <button class="zoom-btn" id="plus">＋</button>
+                          <button class="zoom-btn" id="minus">－</button>
+                        </div>
+                        <div class="filter-wrap">
+                          <button class="filter-btn" data-cat="ascensor">Ascensores</button>
+                          <button class="filter-btn" data-cat="bano">Baños</button>
+                          <button class="filter-btn" data-cat="fumadores">Zona fumadores</button>
+                          <button class="filter-btn" data-cat="reset">Reset</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
             <section id="view-weather" class="view">
                 <div class="card-grid">
                     <div class="card now">
@@ -325,6 +361,9 @@
         <a href="#" class="sidebar-nav-link" data-view="weather">
             <span class="material-symbols-outlined">wb_sunny</span> Clima
         </a>
+        <a href="#" class="sidebar-nav-link" data-view="mapa">
+            <span class="material-symbols-outlined">map</span> Mapa
+        </a>
         <a href="#" class="sidebar-nav-link" data-view="extras">
             <span class="material-symbols-outlined">add_circle</span> Extras
         </a>
@@ -343,6 +382,7 @@
 
     <script src="./ppp-data.js"></script>
     <script src="./renderer.js"></script>
+    <script src="./nameMap.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 </html>
